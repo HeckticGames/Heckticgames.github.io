@@ -1,0 +1,214 @@
+@font-face {
+    font-family: fa;
+    src: url(RockwellNova.ttf);
+    
+}
+
+body {
+    background-color: rgb(37, 37, 37);
+    width: 600px;
+    
+}
+
+.but1 {
+
+    
+    color: black;
+    font-family: fa;
+    font-size: 22px;
+    text-align: center;
+    background-color: steelblue;
+    border-color: lawngreen;
+    width: 150px;
+    position: relative;
+    left: 375px;
+    bottom: 300px;
+    height: 35px;
+    letter-spacing: 2px;
+
+}
+
+.but2 {
+
+    color: black;
+    font-family: fa;
+    font-size: 22px;
+    text-align: center;
+    background-color: steelblue;
+    border-color: lawngreen;
+    width: 150px;
+    position: relative;
+    left: 575px;
+    bottom: 335px;
+    height: 35px;
+    letter-spacing: 2px;
+}
+
+.but3 {
+
+    color: black;
+    font-family: fa;
+    font-size: 22px;
+    text-align: center;
+    background-color: steelblue;
+    border-color: lawngreen;
+    width: 150px;
+    position: relative;
+    left: 775px;
+    bottom: 370px;
+    height: 35px;
+    letter-spacing: 2px;
+}
+
+.but4 {
+
+    position: relative;
+    width: 150px;
+    height: 140px;
+    left: 690px;
+    bottom: 446px;
+    background-color: rgba(32, 178, 171, 0.548);
+
+}
+
+.but5 {
+
+    position: relative;
+    width: 150px;
+    height: 140px;
+    left: 460px;
+    bottom: 587px;
+    background-color: rgba(32, 178, 171, 0.555);
+
+
+}
+
+img {
+    position: relative;
+    left: 345px;
+    bottom: 150px;
+    align-items: center;
+
+}
+
+h2 {
+    width: 570px;
+    position: relative;
+    left: 359px;
+    bottom: 450px;
+    text-align: center;
+    color: rgb(147, 151, 161);
+    
+
+}
+
+
+h3 {
+    position: relative;
+    left: 380px;
+    bottom: 300px;
+    color: white;
+    font-size: 20px;
+    
+
+}
+
+
+
+
+h5 {
+    position: relative;
+    left: 565px;
+    color: ivory;
+    bottom: -15px;
+
+}   
+
+h6 {
+    text-align: center;
+    width: 350px;
+    height: 20px;
+    color: ivory;
+    position:relative;
+    left: 470px;
+    font-size: 7px;
+    
+  
+}
+
+.about {
+
+    position: relative;
+
+}
+.pic1 {
+
+    position: relative;
+    transform: rotate(-15deg);
+    bottom: 250px;
+    left: -10px;
+    
+}
+
+.pic2 {
+
+    position: relative;
+    transform: rotate(15deg);
+    left: 550px;
+    bottom: 250px;
+
+}
+
+.pic3 {
+
+    position: relative;
+    bottom: 265px;
+    left: 563px;
+
+}
+
+.pic4 {
+
+    left: 452px;
+    bottom: 100px;
+
+}
+
+.pic5 {
+
+    left: 448px;
+    bottom: 100px;
+
+}
+
+h4 {
+    font-size: 30px;
+    font-family: fa;
+    position: relative;
+    left: 588px;
+    bottom: 460px;
+    color:khaki;
+    letter-spacing: 2px;
+}
+
+h1 {
+    font-size: 30px;
+    font-family: fa;
+    position: relative;
+    left: 422px;
+    bottom: 240px;
+    color: lightgrey;
+    letter-spacing: 50px;
+
+}
+
+.contact {
+
+    position: relative;
+    left: 450px;
+    bottom: 300px;
+    
+}
+_ {
+    font-size: 500px;
+}
