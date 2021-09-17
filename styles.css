@@ -17,7 +17,7 @@ body {
 .donate {
 
 
-    position: relative;
+    position: absolute;
     width: 100px;
     height: 50px;
     background-color: steelblue;
@@ -34,7 +34,7 @@ body {
 
     position: relative;
     left: 520px;
-    bottom: 260px;
+    bottom: 100px;
     font-family: fa;
     color: gainsboro;
     font-size: 20px;
@@ -53,9 +53,9 @@ body {
     background-color: steelblue;
     border-color: lawngreen;
     width: 150px;
-    position: relative;
+    position: absolute;
     left: 375px;
-    bottom: 300px;
+    bottom: 400px;
     height: 35px;
     letter-spacing: 2px;
 
@@ -70,9 +70,9 @@ body {
     background-color: steelblue;
     border-color: lawngreen;
     width: 150px;
-    position: relative;
+    position: absolute;
     left: 575px;
-    bottom: 335px;
+    bottom: 400px;
     height: 35px;
     letter-spacing: 2px;
 }
@@ -86,20 +86,20 @@ body {
     background-color: steelblue;
     border-color: lawngreen;
     width: 150px;
-    position: relative;
+    position: absolute;
     left: 775px;
-    bottom: 370px;
+    bottom: 400px;
     height: 35px;
     letter-spacing: 2px;
 }
 
 .but4 {
 
-    position: relative;
+    position: absolute;
     width: 150px;
     height: 140px;
     left: 690px;
-    bottom: 210px;
+    bottom: 100px;
     background-color: steelblue;
     border-color: lawngreen;
 
@@ -107,11 +107,11 @@ body {
 
 .but5 {
 
-    position: relative;
+    position: absolute;
     width: 150px;
     height: 140px;
-    left: 460px;
-    bottom: 350px;
+    left: 475px;
+    bottom: 100px;
     background-color: steelblue;
     border-color: lawngreen;
 
@@ -122,7 +122,7 @@ body {
 
 position: relative;
 left: 425px;
-bottom: 600px;
+bottom: 180px;
 font-family: fa;
 color: gainsboro;
 
@@ -131,20 +131,20 @@ color: gainsboro;
 
 
 .twitter {
-    position: relative;
+    position: absolute;
     width: 200px;
     height: 100px;
-    bottom: 590px;
-    left: 435px;
+    bottom: 120px;
+    left: 450px;
 
 
 }
 
 .facebook {
 
-    position: relative;
+    position: absolute;
     left: 690px;
-    bottom: 723px;
+    bottom: 97px;
     width: 150px;
     height: 150px;
 
@@ -155,7 +155,8 @@ color: gainsboro;
 .footbut1 {
 
     position: relative;
-    left: 612px;
+    left: 615px;
+    bottom: -5px;
     font-family: fa;
     color: white;
     background-color: steelblue;
@@ -168,12 +169,12 @@ color: gainsboro;
 .footbut2 {
 
     position: relative;
-    left: 600px;
+    left: 603px;
     font-family: fa;
     color: white;
     background-color: steelblue;
     border-color: lawngreen;
-    bottom: -10px;
+    bottom: -15px;
 
 
 }
@@ -200,7 +201,7 @@ h2 {
 
 h3 {
     position: relative;
-    left: 380px;
+    left: 375px;
     bottom: 300px;
     color: white;
     font-size: 20px;
@@ -234,9 +235,18 @@ h6 {
 
 .welcome{
     position: relative;
-    bottom: 250px;
+    bottom: 150px;
 
 }
+
+.hello {
+
+    position: absolute;
+    bottom: 120px;
+    left: 368px;
+
+}
+
 
 .about {
 
@@ -247,7 +257,7 @@ h6 {
 
     position: relative;
     transform: rotate(-15deg);
-    bottom: 250px;
+    bottom: 180px;
     left: -10px;
     
 }
@@ -257,14 +267,14 @@ h6 {
     position: relative;
     transform: rotate(15deg);
     left: 550px;
-    bottom: 250px;
+    bottom: 180px;
 
 }
 
 .pic3 {
 
     position: relative;
-    bottom: 265px;
+    bottom: 200px;
     left: 563px;
 
 }
@@ -429,7 +439,7 @@ h4 {
     font-family: fa;
     position: relative;
     left: 588px;
-    bottom: 300px;
+    bottom: 240px;
     color:khaki;
     letter-spacing: 2px;
 }
