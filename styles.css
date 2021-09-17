@@ -5,9 +5,42 @@
 }
 
 body {
-    background-color: rgb(37, 37, 37);
-    width: 600px;
+
+    background-image: linear-gradient(90deg,black,gray,black);
+    height: 100%;
+    width: 50%;
     
+
+
+}
+
+.donate {
+
+
+    position: relative;
+    width: 100px;
+    height: 50px;
+    background-color: steelblue;
+    border-color: lawngreen;
+    left: 600px;
+    bottom: 250px;
+    font-family: fa;
+    font-size: 16px;
+
+
+}
+
+.payme {
+
+    position: relative;
+    left: 520px;
+    bottom: 260px;
+    font-family: fa;
+    color: gainsboro;
+    font-size: 20px;
+
+
+
 }
 
 .but1 {
@@ -66,8 +99,9 @@ body {
     width: 150px;
     height: 140px;
     left: 690px;
-    bottom: 446px;
-    background-color: rgba(32, 178, 171, 0.548);
+    bottom: 210px;
+    background-color: steelblue;
+    border-color: lawngreen;
 
 }
 
@@ -77,8 +111,69 @@ body {
     width: 150px;
     height: 140px;
     left: 460px;
-    bottom: 587px;
-    background-color: rgba(32, 178, 171, 0.555);
+    bottom: 350px;
+    background-color: steelblue;
+    border-color: lawngreen;
+
+
+}
+
+.email {
+
+position: relative;
+left: 425px;
+bottom: 600px;
+font-family: fa;
+color: gainsboro;
+
+
+}
+
+
+.twitter {
+    position: relative;
+    width: 200px;
+    height: 100px;
+    bottom: 590px;
+    left: 435px;
+
+
+}
+
+.facebook {
+
+    position: relative;
+    left: 690px;
+    bottom: 723px;
+    width: 150px;
+    height: 150px;
+
+
+}
+
+
+.footbut1 {
+
+    position: relative;
+    left: 612px;
+    font-family: fa;
+    color: white;
+    background-color: steelblue;
+    border-color: lawngreen;
+
+    
+
+}
+
+.footbut2 {
+
+    position: relative;
+    left: 600px;
+    font-family: fa;
+    color: white;
+    background-color: steelblue;
+    border-color: lawngreen;
+    bottom: -10px;
 
 
 }
@@ -136,6 +231,13 @@ h6 {
   
 }
 
+
+.welcome{
+    position: relative;
+    bottom: 250px;
+
+}
+
 .about {
 
     position: relative;
@@ -181,12 +283,153 @@ h6 {
 
 }
 
+.eoc {
+
+
+    position: relative;
+    left: 505px;
+
+}
+
+.eocinfo {
+
+    position: center;
+    left: 400px;
+    width: 500px;
+    bottom: 170px;
+    color: gainsboro;
+    
+    
+
+
+
+
+
+}
+
+.eocvideo {
+
+    position: relative;
+    left: 345px;
+    bottom: 150px;
+    height: 200px;
+
+
+}
+
+
+.onsteam {
+
+    position: relative;
+    bottom: 180px;
+    font-size: 30px;
+    left: 450px;
+    color: lawngreen;
+    font-family: fa;
+    
+    
+    
+    
+    
+    
+
+}
+
+.gs {
+
+    position: relative;
+    left: 520px;
+    bottom: 150px;
+    width: 250px;
+    height: 250px;
+
+
+
+
+
+
+}
+
+.itch {
+
+    
+    position: center;
+    width: 500px;
+    bottom: 160px;
+    color: gainsboro;
+    left: 400px;
+
+
+}
+
+
+.onitch {
+
+    position: relative;
+    left: 450px;
+    bottom: 160px;
+    font-size: 30px;
+    font-family: fa;
+    color: lawngreen;
+
+
+
+}
+
+.CH {
+
+    position: relative;
+    bottom: 120px;
+    left: 520px;
+
+
+}
+
+.chinfo {
+
+    position: relative;
+    left: 425px;
+    bottom: 100px;
+    width: 450px;
+    color: gainsboro;
+
+}
+
+.ch1 {
+
+    position: relative;
+    left: 440px;
+    bottom: 100px;
+
+
+}
+
+.ch2 {
+
+    position: relative;
+    left: 450px;
+    bottom: 100px;
+
+}
+
+.soon {
+
+    position: relative;
+    font-family: fa;
+    color: lawngreen;
+    font-size: 30px;
+    left: 423px;
+    bottom: 120px;
+
+}
+
+
 h4 {
     font-size: 30px;
     font-family: fa;
     position: relative;
     left: 588px;
-    bottom: 460px;
+    bottom: 300px;
     color:khaki;
     letter-spacing: 2px;
 }
