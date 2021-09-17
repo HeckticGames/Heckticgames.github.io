@@ -428,11 +428,27 @@ h6 {
     font-family: fa;
     color: lawngreen;
     font-size: 30px;
-    left: 423px;
+    left: 470px;
     bottom: 120px;
 
 }
 
+.etsy {
+
+    position: relative;
+    left: 595px;
+    bottom: 120px;
+    font-family: fa;
+    width: 100px;
+    height: 40px;
+    background-color: steelblue;
+    border-color: lawngreen;
+    color: gainsboro;
+    font-size: 20px;
+    text-align: center;
+
+
+}
 
 h4 {
     font-size: 30px;
