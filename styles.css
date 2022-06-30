@@ -184,7 +184,7 @@
 
     img {
         position: relative;
-        left: 525px;
+        left: 650px;
         bottom: 150px;
         align-items: center;
 
@@ -261,7 +261,7 @@
         position: relative;
         transform: rotate(-15deg);
         bottom: 180px;
-        left: -10px;
+        left: 200px;
         
     }
 
