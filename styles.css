@@ -9,7 +9,7 @@
 
     body {
 
-        background-image: linear-gradient(90deg,black,gray,black);
+        background-image: linear-gradient(90deg,teal,black,teal);
         height: 100%;
         width: 50%;
         
@@ -25,7 +25,7 @@
         height: 50px;
         background-color: steelblue;
         border-color: lawngreen;
-        left: 775px;
+        left: 900px;
         bottom: 100px;
         font-family: fa;
         font-size: 16px;
@@ -36,7 +36,7 @@
     .payme {
 
         position: relative;
-        left: 695px;
+        left: 820px;
         bottom: 100px;
         font-family: fa;
         color: gainsboro;
@@ -101,7 +101,7 @@
         position: relative;
         width: 150px;
         height: 140px;
-        left: 870px;
+        left: 1030px;
         bottom: 87px;
         background-color: steelblue;
         border-color: lawngreen;
@@ -113,7 +113,7 @@
         position: relative;
         width: 150px;
         height: 140px;
-        left: 620px;
+        left: 710px;
         bottom: 228px;
         background-color: steelblue;
         border-color: lawngreen;
@@ -124,7 +124,7 @@
     .email {
 
     position: relative;
-    left: 600px;
+    left: 725px;
     bottom: 180px;
     font-family: fa;
     color: gainsboro;
@@ -138,7 +138,7 @@
         width: 200px;
         height: 100px;
         bottom: 422px;
-        left: 603px;
+        left: 694px;
 
 
     }
@@ -146,7 +146,7 @@
     .facebook {
 
         position: absolute;
-        left: 878px;
+        left: 1038px;
         bottom: 400px;
         width: 150px;
         height: 150px;
@@ -158,7 +158,7 @@
     .footbut1 {
 
         position: relative;
-        left: 910px;
+        left: 923px;
         bottom: -5px;
         font-family: fa;
         color: white;
@@ -172,7 +172,7 @@
     .footbut2 {
 
         position: relative;
-        left: 895px;
+        left: 910px;
         font-family: fa;
         color: white;
         background-color: steelblue;
@@ -193,7 +193,7 @@
     h2 {
         width: 570px;
         position: relative;
-        left: 540px;
+        left: 665px;
         bottom: 450px;
         text-align: center;
         color: rgb(147, 151, 161);
@@ -217,7 +217,7 @@
 
     h5 {
         position: relative;
-        left: 850px;
+        left: 868px;
         color: ivory;
         bottom: -15px;
 
@@ -229,7 +229,7 @@
         height: 20px;
         color: ivory;
         position:relative;
-        left: 765px;
+        left: 780px;
         font-size: 7px;
         
     
@@ -261,7 +261,7 @@
         position: relative;
         transform: rotate(-15deg);
         bottom: 180px;
-        left: 200px;
+        left: 310px;
         
     }
 
@@ -269,7 +269,7 @@
 
         position: relative;
         transform: rotate(15deg);
-        left: 550px;
+        left: 820px;
         bottom: 180px;
 
     }
@@ -278,36 +278,23 @@
 
         position: relative;
         bottom: 200px;
-        left: 563px;
+        left: 858px;
 
     }
 
-    .pic4 {
-
-        left: 452px;
-        bottom: 100px;
-
-    }
-
-    .pic5 {
-
-        left: 448px;
-        bottom: 100px;
-
-    }
 
     .eoc {
 
 
         position: relative;
-        left: 505px;
+        left: 790px;
 
     }
 
     .eocinfo {
 
         position: center;
-        left: 400px;
+        left: 690px;
         width: 500px;
         bottom: 170px;
         color: gainsboro;
@@ -320,12 +307,39 @@
 
     }
 
+    .eocpic1 {
+
+        position: relative;
+        left: 580px;
+
+
+    }
+
+    .eocpic2 {
+
+        position: relative;
+        left: 700px;
+    
+    
+    }
+
+    .eocpic3 {
+
+        position: relative;
+        left: -28px;
+        bottom: -80px;
+    
+    
+    }
+
+
+
     .eocvideo {
 
         position: relative;
-        left: 345px;
+        left: 980px;
         bottom: 150px;
-        height: 200px;
+       
 
 
     }
@@ -336,7 +350,7 @@
         position: relative;
         bottom: 180px;
         font-size: 30px;
-        left: 450px;
+        left: 750px;
         color: lawngreen;
         font-family: fa;
         
@@ -351,7 +365,7 @@
     .gs {
 
         position: relative;
-        left: 520px;
+        left: 820px;
         bottom: 150px;
         width: 250px;
         height: 250px;
@@ -370,7 +384,8 @@
         width: 500px;
         bottom: 160px;
         color: gainsboro;
-        left: 400px;
+        left: 700px;
+        
 
 
     }
@@ -379,7 +394,7 @@
     .onitch {
 
         position: relative;
-        left: 450px;
+        left: 745px;
         bottom: 160px;
         font-size: 30px;
         font-family: fa;
@@ -389,76 +404,14 @@
 
     }
 
-    .CH {
-
-        position: relative;
-        bottom: 120px;
-        left: 520px;
-
-
-    }
-
-    .chinfo {
-
-        position: relative;
-        left: 425px;
-        bottom: 100px;
-        width: 450px;
-        color: gainsboro;
-
-    }
-
-    .ch1 {
-
-        position: relative;
-        left: 440px;
-        bottom: 100px;
-
-
-    }
-
-    .ch2 {
-
-        position: relative;
-        left: 450px;
-        bottom: 100px;
-
-    }
-
-    .soon {
-
-        position: relative;
-        font-family: fa;
-        color: lawngreen;
-        font-size: 30px;
-        left: 470px;
-        bottom: 120px;
-
-    }
-
-    .etsy {
-
-        position: relative;
-        left: 595px;
-        bottom: 120px;
-        font-family: fa;
-        width: 100px;
-        height: 40px;
-        background-color: steelblue;
-        border-color: lawngreen;
-        color: gainsboro;
-        font-size: 20px;
-        text-align: center;
-
-
-    }
+  
 
     h4 {
         font-size: 30px;
         font-family: fa;
         position: relative;
-        left: 588px;
-        bottom: 240px;
+        left: 880px;
+        bottom: 230px;
         color:khaki;
         letter-spacing: 2px;
     }
@@ -481,9 +434,7 @@
         bottom: 300px;
         
     }
-    _ {
-        font-size: 500px;
-    }
+   
 
 @media (max-width: 1000px) {
 
