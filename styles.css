@@ -307,6 +307,34 @@
 
     }
 
+    .steamlink {
+
+        position: relative;
+        left: 912px;
+        bottom: 625px;
+        width: 60px;
+        height: 60px;
+        background-color: teal;
+        border-color: steelblue;
+        
+
+
+    }
+
+    .steamimg {
+
+        position: absolute;
+        left: 890px;
+        bottom: -70px;
+        width: 120px;
+        height: 80px;
+        
+
+
+    }
+
+
+
     .eocpic1 {
 
         position: relative;
