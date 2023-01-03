@@ -321,16 +321,26 @@
     .teapic {
 
         position: relative;
-        left: 550px;
+        left: 775px;
         
 
     }
 
+    
+
     .buynow2 {
 
         position: relative;
-        left: 1375px;
-        bottom: 210px;
+        left: 1150px;
+        bottom: 390px;
+
+    }
+
+    .teadis {
+
+        position: relative;
+        left: 650px;
+        bottom: 150px;
 
     }
 
