@@ -496,7 +496,7 @@
 
 
 
-    }s
+    }
 
   
 
@@ -522,3 +522,32 @@
     }
    
 
+    .HCHeader {
+
+        position: absolute;
+        left: 700px;
+        top: 50px;
+    }
+
+    .CW001 {
+
+        position: absolute;
+        left: 500px;
+        font-family: fa;
+        font-size: 25px;
+        color: darkslateblue;
+        background-color: black;
+        border-color: white;
+        width: 200px;
+        height: 50px;
+        bottom: 450px;
+        
+    }
+
+    .CWID {
+
+        position: relative;
+        left: 0px;
+        top: 0px;
+        
+    }
