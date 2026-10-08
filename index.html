@@ -146,7 +146,7 @@
     .hero-media.hero-logo-bg img {
       object-fit: contain;
       object-position: center;
-      transform: scale(1.45);
+      transform: scale(2.0);
       opacity: .9;
     }
     .hero-inner-centered {
@@ -575,7 +575,7 @@
       // Hero parallax
       var heroImage = document.querySelector('.hero-media img');
       var isLogoBg = heroImage && heroImage.closest('.hero-logo-bg');
-      var baseScale = isLogoBg ? 1.45 : 1.035;
+      var baseScale = isLogoBg ? 2.0 : 1.035;
       if (!reduced && heroImage) {
         document.querySelector('.hero').addEventListener('pointermove', function (event) {
           var rect = this.getBoundingClientRect();
