@@ -149,6 +149,9 @@
       transform: scale(2.0);
       opacity: .9;
     }
+    @media (min-width: 761px) {
+      .hero-media.hero-logo-bg img { transform: scale(1.8); }
+    }
     .hero-inner-centered {
       justify-content: center;
       text-align: center;
@@ -575,7 +578,8 @@
       // Hero parallax
       var heroImage = document.querySelector('.hero-media img');
       var isLogoBg = heroImage && heroImage.closest('.hero-logo-bg');
-      var baseScale = isLogoBg ? 2.0 : 1.035;
+      var isDesktop = window.matchMedia('(min-width: 761px)').matches;
+      var baseScale = isLogoBg ? (isDesktop ? 1.8 : 2.0) : 1.035;
       if (!reduced && heroImage) {
         document.querySelector('.hero').addEventListener('pointermove', function (event) {
           var rect = this.getBoundingClientRect();
