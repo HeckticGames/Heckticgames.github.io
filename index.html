@@ -164,6 +164,19 @@
       -webkit-mask-image: linear-gradient(to bottom, transparent 15%, black 80%);
       mask-image: linear-gradient(to bottom, transparent 15%, black 80%);
     }
+    .hero-media.hero-logo-bg img {
+      object-fit: contain;
+      object-position: center;
+      transform: scale(1);
+      opacity: .9;
+    }
+    .hero-inner-centered {
+      justify-content: center;
+      text-align: center;
+    }
+    .hero-inner-centered .hero-text { text-align: center; }
+    .hero-inner-centered .signal { justify-content: center; }
+    .hero-inner-centered .hero-copy p { margin: 0 auto; }
     .hero-inner {
       position: relative;
       z-index: 2;
@@ -439,10 +452,9 @@
 
   <main id="top">
     <section class="hero" aria-labelledby="hero-title">
-      <div class="hero-media" aria-hidden="true"><img data-img="plaza" alt="" /></div>
+      <div class="hero-media hero-logo-bg" aria-hidden="true"><img data-img="logo" alt="" /></div>
       <div class="hero-grid" aria-hidden="true"></div>
-      <div class="hero-inner">
-        <div class="hero-logo"><img data-img="logo" alt="Hecktic Games logo — a wolf in a hexagon" /></div>
+      <div class="hero-inner hero-inner-centered">
         <div class="hero-text">
           <div class="signal">Indie game studio</div>
           <h1 id="hero-title">Hecktic <em>Games.</em></h1>
