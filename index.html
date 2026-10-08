@@ -95,17 +95,6 @@
       isolation: isolate;
     }
     .brand span { color: var(--aqua); }
-    .brand::before,
-    .brand::after {
-      content: "HECKTIC GAMES";
-      position: absolute;
-      inset: 0;
-      z-index: -1;
-      pointer-events: none;
-      opacity: 0;
-    }
-    .brand::before { color: var(--aqua); transform: translateX(-2px); }
-    .brand::after { color: #a45cff; transform: translateX(2px); }
     .brand-mark {
       position: absolute;
       left: 0;
@@ -401,14 +390,11 @@
       36% { transform: translateX(250%); width: 18%; }
       37%, 100% { transform: translateX(0); width: 28%; }
     }
-    @keyframes brandGlitch {
-      0%, 88%, 100% { opacity: 0; clip-path: inset(0 0 100% 0); }
-      89% { opacity: .8; clip-path: inset(15% 0 55% 0); }
-      91% { opacity: .45; clip-path: inset(68% 0 10% 0); }
-      93% { opacity: 0; }
+    @keyframes brandGlow {
+      0%, 100% { text-shadow: 0 0 0 rgba(97,245,231,0); }
+      50% { text-shadow: 0 0 22px rgba(97,245,231,.55); }
     }
-    .brand::before { animation: brandGlitch 4.6s steps(1) infinite; }
-    .brand::after { animation: brandGlitch 4.6s steps(1) .06s infinite reverse; }
+    .brand { animation: brandGlow 3.2s ease-in-out infinite; }
     @media (max-width: 760px) {
       .nav-links a:not(:last-child) { display: none; }
       .hero { min-height: 700px; height: 92svh; }
@@ -578,8 +564,7 @@
 
   <footer>
     <div class="footer-inner">
-      <p>© 2026 Hecktic Games</p>
-      <a class="site-link" href="https://heckticgames.com/" target="_blank" rel="noopener">Visit heckticgames.com ↗</a>
+      <p>© 2026 Hecktic Games · A veteran owned business</p>
     </div>
   </footer>
 
