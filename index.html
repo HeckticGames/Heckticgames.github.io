@@ -156,7 +156,7 @@
     .hero-media.hero-logo-bg img {
       object-fit: contain;
       object-position: center;
-      transform: scale(1);
+      transform: scale(1.45);
       opacity: .9;
     }
     .hero-inner-centered {
@@ -584,15 +584,17 @@
 
       // Hero parallax
       var heroImage = document.querySelector('.hero-media img');
+      var isLogoBg = heroImage && heroImage.closest('.hero-logo-bg');
+      var baseScale = isLogoBg ? 1.45 : 1.035;
       if (!reduced && heroImage) {
         document.querySelector('.hero').addEventListener('pointermove', function (event) {
           var rect = this.getBoundingClientRect();
           var x = ((event.clientX - rect.left) / rect.width - 0.5) * 12;
           var y = ((event.clientY - rect.top) / rect.height - 0.5) * 8;
-          heroImage.style.transform = 'scale(1.055) translate(' + (-x) + 'px,' + (-y) + 'px)';
+          heroImage.style.transform = 'scale(' + (baseScale + 0.02) + ') translate(' + (-x) + 'px,' + (-y) + 'px)';
         });
         document.querySelector('.hero').addEventListener('pointerleave', function () {
-          heroImage.style.transform = 'scale(1.035)';
+          heroImage.style.transform = 'scale(' + baseScale + ')';
         });
       }
 
