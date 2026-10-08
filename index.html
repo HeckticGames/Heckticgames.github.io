@@ -95,16 +95,6 @@
       isolation: isolate;
     }
     .brand span { color: var(--aqua); }
-    .brand-mark {
-      position: absolute;
-      left: 0;
-      bottom: -8px;
-      width: 28%;
-      height: 2px;
-      background: var(--aqua);
-      box-shadow: 24px 0 0 rgba(97,245,231,.35), 52px 0 0 rgba(97,245,231,.16);
-      animation: brandScan 2.8s cubic-bezier(.22,.8,.28,1) infinite;
-    }
     .nav-links { display: flex; align-items: center; gap: 26px; }
     .nav-links a {
       text-decoration: none;
@@ -422,7 +412,7 @@
   <div class="grain" aria-hidden="true"></div>
   <header class="nav-wrap">
     <nav aria-label="Main navigation">
-      <a class="brand" href="#top" aria-label="Hecktic Games home">Hecktic <span>Games</span><i class="brand-mark" aria-hidden="true"></i></a>
+      <a class="brand" href="#top" aria-label="Hecktic Games home">Hecktic <span>Games</span></a>
       <div class="nav-links">
         <a href="https://store.steampowered.com/search/?developer=Hecktic%20Games" target="_blank" rel="noopener">On Steam</a>
       </div>
