@@ -1669,6 +1669,9 @@
         tray.querySelectorAll('.swatch').forEach(function (sw) {
           sw.addEventListener('click', function () {
             var c1 = sw.getAttribute('data-c1'), c2 = sw.getAttribute('data-c2');
+            currentGhostC1 = c1;
+            currentGhostC2 = c2;
+            saveState();
             if (room3d) room3d.setGhostColor(c1, c2);
             underglow.style.background =
               'radial-gradient(50% 100% at 50% 0%, ' + hexToRgba(c1, 0.55) + ' 0%, ' + hexToRgba(c1, 0.16) + ' 55%, transparent 78%)';
@@ -1724,10 +1727,14 @@
           if (room3d) room3d.setShelfColor(sw.getAttribute('data-c'));
         }, "New shelf color. The books approve.");
         bindTraySwatches(setFloor, function (sw) {
-          if (room3d) room3d.setFloorTone(sw.getAttribute('data-tone'));
+          currentFloorTone = sw.getAttribute('data-tone');
+          if (room3d) room3d.setFloorTone(currentFloorTone);
+          saveState();
         }, "New floor day. Watch your step — it's fancy now.");
         bindTraySwatches(setWall, function (sw) {
-          if (room3d) room3d.setWallPaint(sw.getAttribute('data-paint'));
+          currentWallPaint = sw.getAttribute('data-paint');
+          if (room3d) room3d.setWallPaint(currentWallPaint);
+          saveState();
         }, "Fresh paint. I supervised the whole thing.");
 
         /* Room items */
@@ -1765,12 +1772,67 @@
            cleared data), so every touch of it is guarded and the
            hub works exactly the same without it. */
         var STORE_KEY = 'relic-hub-state-v1';
+        /* Colors and finishes ride in the same record: her two
+           ghost colors, the floor tone, and the wall paint. The
+           defaults are the active swatches in the markup — teal
+           ghost, dark oak floor, warm cream walls — and a record
+           that predates these keys simply falls back to them. */
+        var DEFAULT_GHOST_C1 = '#5ff0d8';
+        var DEFAULT_GHOST_C2 = '#17bfa5';
+        var DEFAULT_FLOOR_TONE = '#6b4a2d';
+        var DEFAULT_WALL_PAINT = '#ffe2c0';
+        var currentGhostC1 = DEFAULT_GHOST_C1;
+        var currentGhostC2 = DEFAULT_GHOST_C2;
+        var currentFloorTone = DEFAULT_FLOOR_TONE;
+        var currentWallPaint = DEFAULT_WALL_PAINT;
+        function markSwatchActive(container, attr, value) {
+          if (!container) return;
+          container.querySelectorAll('.swatch').forEach(function (s) {
+            s.classList.toggle('active', s.getAttribute(attr) === value);
+          });
+        }
+        function applyGhostColors(c1, c2) {
+          currentGhostC1 = c1;
+          currentGhostC2 = c2;
+          if (room3d) room3d.setGhostColor(c1, c2);
+          underglow.style.background =
+            'radial-gradient(50% 100% at 50% 0%, ' + hexToRgba(c1, 0.55) + ' 0%, ' + hexToRgba(c1, 0.16) + ' 55%, transparent 78%)';
+          if (tray) {
+            tray.querySelectorAll('.swatch').forEach(function (s) {
+              s.classList.toggle('active', s.getAttribute('data-c1') === c1 && s.getAttribute('data-c2') === c2);
+            });
+          }
+        }
+        function applyFloorTone(tone) {
+          currentFloorTone = tone;
+          if (room3d) room3d.setFloorTone(tone);
+          markSwatchActive(setFloor, 'data-tone', tone);
+        }
+        function applyWallPaint(paint) {
+          currentWallPaint = paint;
+          if (room3d) room3d.setWallPaint(paint);
+          markSwatchActive(setWall, 'data-paint', paint);
+        }
+        /* A blob only counts as a hub record if it carries at
+           least one key a hub record can carry. Anything else —
+           a foreign object left under the account by some other
+           tool, say — is treated as no record at all, never as
+           an empty room. */
+        function isHubRecord(blob) {
+          if (!blob || typeof blob !== 'object') return false;
+          return ('plus' in blob) || ('owned' in blob) || ('placed' in blob) || ('cart' in blob) ||
+            ('ghostC1' in blob) || ('ghostC2' in blob) || ('floorTone' in blob) || ('wallPaint' in blob);
+        }
         function stateSnapshot() {
           return {
             plus: plusOn,
             owned: ownedItems,
             placed: placedItems,
-            cart: cartIds()
+            cart: cartIds(),
+            ghostC1: currentGhostC1,
+            ghostC2: currentGhostC2,
+            floorTone: currentFloorTone,
+            wallPaint: currentWallPaint
           };
         }
         function writeLocalState() {
@@ -2064,6 +2126,14 @@
             }
             if (s.plus) plusOn = true;
           }
+          /* colors and finishes: the record's picks, or the
+             defaults when the record predates them */
+          applyGhostColors(
+            (s && typeof s.ghostC1 === 'string' && s.ghostC1) ? s.ghostC1 : DEFAULT_GHOST_C1,
+            (s && typeof s.ghostC2 === 'string' && s.ghostC2) ? s.ghostC2 : DEFAULT_GHOST_C2
+          );
+          applyFloorTone((s && typeof s.floorTone === 'string' && s.floorTone) ? s.floorTone : DEFAULT_FLOOR_TONE);
+          applyWallPaint((s && typeof s.wallPaint === 'string' && s.wallPaint) ? s.wallPaint : DEFAULT_WALL_PAINT);
           Object.keys(ITEM_DEFS).forEach(function (id) {
             renderShopItem(id);
             if (!room3d) return;
@@ -2416,13 +2486,15 @@
         /* pull the account's room down: the server record goes
            through the same restore routine the local record uses
            and wins, then becomes the local cache. No record yet
-           (data: null) means this device's room becomes the
-           account's room instead. */
+           (data: null), or a stored blob that isn't a hub record
+           at all, means this device's room becomes the account's
+           room instead — and overwrites the junk with a valid
+           record. */
         function syncFromServer() {
           if (!authToken) return;
           apiFetch('/save').then(function (r) {
             if (r.status !== 200) return;
-            if (r.data && r.data.data) {
+            if (r.data && isHubRecord(r.data.data)) {
               applyState(r.data.data);
               writeLocalState();
             } else if (authToken) {
