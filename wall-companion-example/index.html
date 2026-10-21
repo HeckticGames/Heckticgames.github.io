@@ -786,7 +786,7 @@
                       <rect x="7" y="14.6" width="2.3" height="4.6" rx="1.1" fill="currentColor"/>
                       <path d="M17.9 9.4a4.2 4.2 0 0 1 0 5.2" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
                     </svg>
-                    Hey
+                    <span id="wake-label">Hey</span>
                   </button>
 
                   <div class="marquee" id="marquee" role="status">
@@ -1410,6 +1410,13 @@
                  clicking away: whatever options are up, close them */
               if (!booted) return;
               closeAllOptions();
+            },
+            onItemMoved: function () {
+              /* a drag ended or a rotate swing settled: the piece's
+                 new spot belongs in the saved record (stateSnapshot
+                 pulls the live transforms at save time) */
+              if (!booted) return;
+              saveState();
             }
           });
         } catch (e) { room3d = null; }
@@ -1456,6 +1463,23 @@
         var convTimer = null;
         var convListenTimer = null;
         var micBlocked = false;
+        var wakeBtn = document.getElementById('btn-wake');
+        var wakeLabel = document.getElementById('wake-label');
+        /* The Hey button is the conversation's door, in and out:
+           while a conversation session is active the button reads
+           Bye, and pressing it ends the session. The label is a pure
+           readout of convActive — synced at the very transitions
+           that start and end a conversation (the wake press,
+           endConversation, cancelConversation) rather than tracked
+           on its own flag — so it can never claim she's close when
+           she isn't, or offer Hey while she's already listening. */
+        function syncWakeLabel() {
+          if (wakeLabel) wakeLabel.textContent = convActive ? 'Bye' : 'Hey';
+          if (wakeBtn) {
+            wakeBtn.setAttribute('aria-label', convActive ? 'Bye — end the conversation' : 'Hey — talk to Relic');
+            wakeBtn.title = convActive ? 'Bye — end the conversation' : 'Hey — talk to Relic';
+          }
+        }
         function scheduleLinger() {
           clearTimeout(convTimer);
           convTimer = null;
@@ -1477,6 +1501,7 @@
           wakeMicUntil = 0;
           stopCurrentListening();
           micRefresh();
+          syncWakeLabel();
           if (room3d && room3d.leaveApproach) room3d.leaveApproach();
         }
         function cancelConversation() {
@@ -1487,6 +1512,7 @@
           wakeMicUntil = 0;
           stopCurrentListening();
           micRefresh();
+          syncWakeLabel();
         }
         function scheduleFollowUpListening(delay) {
           clearTimeout(convListenTimer);
@@ -1612,6 +1638,17 @@
         var gi = 0;
         document.getElementById('btn-wake').addEventListener('click', function () {
           if (!booted) return;
+          if (convActive) {
+            /* the button reads Bye while she's close: pressing it
+               ends the conversation through the same teardown as
+               every other ending — recognition aborted (its late
+               results die with the session), linger and follow-up
+               timers cleared — and endConversation drifts her back
+               to the spot she came from. The label follows
+               convActive back to Hey inside that same call. */
+            endConversation();
+            return;
+          }
           sndWake();
           /* the listening light belongs to the wake moment — and
              to real recognition for as long as that's running */
@@ -1628,6 +1665,7 @@
              back to the spot she came from. */
           if (room3d && room3d.approach) room3d.approach();
           convActive = true;
+          syncWakeLabel();
           micBlocked = false;
           clearTimeout(convListenTimer); convListenTimer = null;
           scheduleLinger();
@@ -1821,7 +1859,34 @@
         function isHubRecord(blob) {
           if (!blob || typeof blob !== 'object') return false;
           return ('plus' in blob) || ('owned' in blob) || ('placed' in blob) || ('cart' in blob) ||
-            ('ghostC1' in blob) || ('ghostC2' in blob) || ('floorTone' in blob) || ('wallPaint' in blob);
+            ('ghostC1' in blob) || ('ghostC2' in blob) || ('floorTone' in blob) || ('wallPaint' in blob) ||
+            ('pos' in blob);
+        }
+        /* Where every placed piece currently sits, pulled live from
+           the room at snapshot time: positions drift with drags and
+           turns, and while drag-end and rotate-end now save on their
+           own, the snapshot still asks the room rather than trusting
+           a cache — so any save, from any trigger, carries the true
+           spots. The rug is a permanent piece, always in the room, so
+           its spot is always recorded; shop pieces appear only while
+           placed. Transforms are {x, z, rot}: floor-plane room units
+           and rotation.y in radians, rounded to keep records tidy. */
+        function collectPositions() {
+          var pos = {};
+          if (!room3d || !room3d.getItemTransform) return pos;
+          function grab(id) {
+            var t = room3d.getItemTransform(id);
+            if (t) pos[id] = {
+              x: Math.round(t.x * 1000) / 1000,
+              z: Math.round(t.z * 1000) / 1000,
+              rot: Math.round(t.rot * 1000) / 1000
+            };
+          }
+          Object.keys(placedItems).forEach(function (id) {
+            if (placedItems[id]) grab(id);
+          });
+          grab('rug');
+          return pos;
         }
         function stateSnapshot() {
           return {
@@ -1832,7 +1897,8 @@
             ghostC1: currentGhostC1,
             ghostC2: currentGhostC2,
             floorTone: currentFloorTone,
-            wallPaint: currentWallPaint
+            wallPaint: currentWallPaint,
+            pos: collectPositions()
           };
         }
         function writeLocalState() {
@@ -2137,9 +2203,19 @@
           Object.keys(ITEM_DEFS).forEach(function (id) {
             renderShopItem(id);
             if (!room3d) return;
-            if (placedItems[id]) room3d.setItem(id, true);
+            if (placedItems[id]) {
+              room3d.setItem(id, true);
+              /* a saved spot for this piece wins over the spot the
+                 room built it at; no saved spot (older records) leaves
+                 it exactly where it is — the old default behavior.
+                 Applying a transform touches no save path, so a
+                 restore can never overwrite the record it is applying */
+              if (s && s.pos && s.pos[id] && room3d.setItemTransform) room3d.setItemTransform(id, s.pos[id]);
+            }
             else if (wasPlaced[id]) room3d.setItem(id, false);
           });
+          /* the rug's saved spot, whenever the record carries one */
+          if (room3d && s && s.pos && s.pos.rug && room3d.setItemTransform) room3d.setItemTransform('rug', s.pos.rug);
           renderCartRow();
           applyPlusUI();
         }
@@ -2480,7 +2556,7 @@
           serverSaveTimer = setTimeout(function () {
             serverSaveTimer = null;
             if (!authToken) return;
-            apiFetch('/save', { method: 'PUT', body: JSON.stringify(stateSnapshot()) }).then(function () {}, function () {});
+            apiFetch('/save', { method: 'PUT', body: JSON.stringify({ data: stateSnapshot() }) }).then(function () {}, function () {});
           }, 800);
         }
         /* pull the account's room down: the server record goes
@@ -2498,7 +2574,7 @@
               applyState(r.data.data);
               writeLocalState();
             } else if (authToken) {
-              apiFetch('/save', { method: 'PUT', body: JSON.stringify(stateSnapshot()) }).then(function () {}, function () {});
+              apiFetch('/save', { method: 'PUT', body: JSON.stringify({ data: stateSnapshot() }) }).then(function () {}, function () {});
             }
           }, function () {});
         }
@@ -3365,8 +3441,11 @@
               g.arc(cx + gx * 0.6, 238, 21, Math.PI * 0.18, Math.PI * 0.82);
               g.stroke();
             }
-            /* the hex heart — the Hecktic hexagon, glowing through the sheet */
-            var hr = 37 * drawState.pulse, hy = 400, hi2, ha, hx, hyy;
+            /* the hex heart — the Hecktic hexagon, glowing through
+               the sheet. Its center rides at hy in canvas pixels
+               (the sheet spans y 52 to 452): raised from 400 to 372,
+               28px — about 7% of her body height — higher on her chest */
+            var hr = 37 * drawState.pulse, hy = 372, hi2, ha, hx, hyy;
             g.save();
             g.shadowColor = c1; g.shadowBlur = 30;
             g.beginPath();
@@ -3987,10 +4066,13 @@
             clearTimeout(holdTimer);
             lastUpT = elapsed;
             if (objDrag) {
-              /* dropped: they stay where they were left */
+              /* dropped: they stay where they were left — and a moved
+                 piece's new spot goes on the room's record */
               if (objDrag.kind === 'ghost') { ghostState.mode = 'idle'; ghostState.pauseT = 5; }
+              var droppedId = objDrag.kind === 'rug' ? 'rug' : (objDrag.kind === 'item' ? objDrag.id : null);
               resetShake();
               objDrag = null; downHit = null;
+              if (droppedId && cb.onItemMoved) cb.onItemMoved(droppedId);
               return;
             }
             downHit = null;
@@ -4030,8 +4112,10 @@
             dragging = false; lastUpT = elapsed;
             clearTimeout(holdTimer);
             if (objDrag && objDrag.kind === 'ghost') { ghostState.pauseT = 1.5; }
+            var cancelledId = objDrag && objDrag.kind === 'rug' ? 'rug' : (objDrag && objDrag.kind === 'item' ? objDrag.id : null);
             resetShake();
             objDrag = null; downHit = null;
+            if (cancelledId && cb.onItemMoved) cb.onItemMoved(cancelledId);
           });
 
           /* ---- resize ---- */
@@ -4365,6 +4449,10 @@
               tween(0.35, function (k) {
                 g.rotation.y = start + (target - start) * k;
                 clampItemPos(g, id);
+              }, function () {
+                /* the swing has settled (and any wall clamp with it):
+                   the piece's new heading is ready to be recorded */
+                if (cb.onItemMoved) cb.onItemMoved(id);
               });
             },
             setFloorTone: function (hex) {
@@ -4411,6 +4499,28 @@
                 tween(0.3, function (k) { grp.scale.setScalar(Math.max(0.001, 1 - k)); }, function () { grp.visible = false; });
                 if (ghostState.actItem === id) { ghostState.mode = 'idle'; ghostState.actItem = null; ghostState.pauseT = 0.5; }
               }
+            },
+            /* a placed piece's transform is just its group's spot on
+               the floor plane plus its heading: position x/z in room
+               units (y never changes — pieces sit on the floor, the
+               lights slide along the wall) and rotation.y in radians.
+               getItemTransform reads the live values wherever the
+               piece has been dragged or turned to; setItemTransform
+               puts a saved transform back, re-clamped against the
+               rotated footprint so a record can never park a corner
+               through a wall. */
+            getItemTransform: function (id) {
+              var g = id === 'rug' ? rugGroup : itemGroups[id];
+              if (!g) return null;
+              return { x: g.position.x, z: g.position.z, rot: g.rotation.y };
+            },
+            setItemTransform: function (id, t) {
+              var g = id === 'rug' ? rugGroup : itemGroups[id];
+              if (!g || !t) return;
+              if (typeof t.x === 'number' && isFinite(t.x)) g.position.x = t.x;
+              if (typeof t.z === 'number' && isFinite(t.z)) g.position.z = t.z;
+              if (typeof t.rot === 'number' && isFinite(t.rot)) g.rotation.y = t.rot;
+              clampItemPos(g, id);
             }
           };
         }
