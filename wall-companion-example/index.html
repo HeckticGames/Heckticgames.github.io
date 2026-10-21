@@ -323,6 +323,59 @@
       @media (prefers-color-scheme: dark) { .plus-action.is-on { color: var(--teal-bright); border-color: var(--teal-bright); } }
       .plus-fine { margin: 11px 0 0; font-size: 11.5px; color: var(--ink-soft); line-height: 1.45; }
 
+      /* Account row + panel — a slim neutral control under the
+         Shop/Plus button row, and a card in the same family as the
+         shop and Plus panels. Teal and neutral only: purple is the
+         money color, and an account is not a purchase. */
+      .acct-row { display: flex; justify-content: center; }
+      .acct-btn {
+        background: none; border: 1.5px solid var(--card-line); color: var(--ink);
+        border-radius: 999px; padding: 7px 18px;
+        font-size: 12.5px; font-weight: 800; letter-spacing: 0.02em;
+        max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        transition: border-color 0.15s ease, transform 0.12s ease;
+      }
+      .acct-btn:hover { border-color: var(--teal); transform: translateY(-1px); }
+      .acct-btn:active { transform: translateY(0) scale(0.97); }
+      .acct-pop {
+        width: 100%; max-width: 680px;
+        background: var(--card);
+        border: 1px solid var(--card-line);
+        border-radius: 20px;
+        padding: 14px 18px 16px;
+        box-shadow: 0 14px 30px var(--shadow);
+        text-align: left;
+      }
+      .acct-pop[hidden] { display: none; }
+      .acct-head {
+        color: var(--teal-deep); font-size: 11px; font-weight: 800;
+        letter-spacing: 0.14em; text-transform: uppercase;
+        padding: 2px 0 10px;
+      }
+      @media (prefers-color-scheme: dark) { .acct-head { color: var(--teal-bright); } }
+      .acct-fields { display: flex; flex-direction: column; gap: 10px; }
+      .acct-error { margin: 10px 0 0; font-size: 12.5px; font-weight: 700; color: #b3352c; line-height: 1.45; }
+      .acct-error[hidden] { display: none; }
+      @media (prefers-color-scheme: dark) { .acct-error { color: #ff9d94; } }
+      .acct-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 14px; }
+      .acct-submit {
+        background: var(--teal-deep); border: 1.5px solid var(--teal-deep); color: #eafffa;
+        border-radius: 999px; padding: 10px 24px;
+        font-size: 14px; font-weight: 800;
+        transition: transform 0.12s ease, opacity 0.15s ease;
+      }
+      @media (prefers-color-scheme: dark) { .acct-submit { background: var(--teal-bright); border-color: var(--teal-bright); color: #06231d; } }
+      .acct-submit:hover { transform: translateY(-1px); }
+      .acct-submit:active { transform: translateY(0) scale(0.97); }
+      .acct-submit:disabled { opacity: 0.6; transform: none; cursor: default; }
+      .acct-link {
+        background: none; border: none; color: var(--teal-deep);
+        font-size: 13px; font-weight: 800; padding: 4px 2px;
+        text-decoration: underline; text-underline-offset: 3px;
+      }
+      @media (prefers-color-scheme: dark) { .acct-link { color: var(--teal-bright); } }
+      .acct-who { margin: 0; font-size: 13.5px; line-height: 1.5; }
+
       .shop-pop {
         width: 100%; max-width: 680px;
         background: var(--card);
@@ -878,6 +931,9 @@
               Plus <span class="plus-price">· $4.99/mo</span><span class="plus-badge" id="plus-badge" hidden>On</span>
             </button>
           </div>
+          <div class="acct-row">
+            <button class="acct-btn" id="btn-acct" aria-haspopup="true" aria-expanded="false" title="Your Relic account">Log in</button>
+          </div>
           <div class="shop-pop" id="shop-pop" role="group" aria-label="Shop for their room" hidden>
             <div class="shop-head">For their room</div>
             <div class="shop-grid">
@@ -1025,6 +1081,26 @@
               </div>
             </div>
           </div>
+          <div class="acct-pop" id="acct-pop" role="group" aria-label="Your Relic account" hidden>
+            <div class="acct-head">Your account</div>
+            <form id="acct-form" novalidate>
+              <div class="acct-fields">
+                <label class="checkout-field"><span>Email</span><input id="acct-email" type="email" autocomplete="email" placeholder="you@example.com" aria-label="Email" /></label>
+                <label class="checkout-field"><span>Password</span><input id="acct-password" type="password" autocomplete="current-password" placeholder="Password" aria-label="Password" /></label>
+              </div>
+              <p class="acct-error" id="acct-error" role="alert" hidden></p>
+              <div class="acct-actions">
+                <button class="acct-submit" id="acct-submit" type="submit">Log in</button>
+                <button class="acct-link" id="acct-toggle" type="button">New here? Create an account</button>
+              </div>
+            </form>
+            <div id="acct-who" hidden>
+              <p class="acct-who">Logged in as <b id="acct-who-email"></b></p>
+              <div class="acct-actions">
+                <button class="acct-submit" id="acct-logout" type="button">Log out</button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -1139,7 +1215,7 @@
            item is clicked again. A tap spent dismissing options is
            consumed by the dismissal: it never also moves the ghost. */
         function anyOptionsOpen() {
-          return tray.classList.contains('open') || trayChair.classList.contains('open') || trayRug.classList.contains('open') || trayShelf.classList.contains('open') || !rotbar.hidden || !settingsPop.hidden || !shopPop.hidden || !plusPop.hidden || !checkoutPop.hidden;
+          return tray.classList.contains('open') || trayChair.classList.contains('open') || trayRug.classList.contains('open') || trayShelf.classList.contains('open') || !rotbar.hidden || !settingsPop.hidden || !shopPop.hidden || !plusPop.hidden || !checkoutPop.hidden || (typeof acctPop !== 'undefined' && acctPop && !acctPop.hidden);
         }
         function closeAllOptions() {
           closeAllTrays();
@@ -1148,6 +1224,7 @@
           if (shopPop && !shopPop.hidden) setShopOpen(false);
           if (plusPop && !plusPop.hidden) setPlusOpen(false);
           if (checkoutPop && !checkoutPop.hidden) setCheckoutOpen(false);
+          if (typeof acctPop !== 'undefined' && acctPop && !acctPop.hidden) setAcctOpen(false);
         }
 
         /* Rotate bar — appears while a movable piece (the rug, the
@@ -1688,15 +1765,22 @@
            cleared data), so every touch of it is guarded and the
            hub works exactly the same without it. */
         var STORE_KEY = 'relic-hub-state-v1';
-        function saveState() {
+        function stateSnapshot() {
+          return {
+            plus: plusOn,
+            owned: ownedItems,
+            placed: placedItems,
+            cart: cartIds()
+          };
+        }
+        function writeLocalState() {
           try {
-            localStorage.setItem(STORE_KEY, JSON.stringify({
-              plus: plusOn,
-              owned: ownedItems,
-              placed: placedItems,
-              cart: cartIds()
-            }));
+            localStorage.setItem(STORE_KEY, JSON.stringify(stateSnapshot()));
           } catch (e) {}
+        }
+        function saveState() {
+          writeLocalState();
+          scheduleServerSave();
         }
         function loadState() {
           try {
@@ -1785,7 +1869,7 @@
         shopBtn.addEventListener('click', function (ev) {
           ev.stopPropagation();
           var opening = shopPop.hidden;
-          if (opening) { closeAllTrays(); hideRotbar(); if (!settingsPop.hidden) setSettingsOpen(false); if (!plusPop.hidden) setPlusOpen(false); if (!checkoutPop.hidden) setCheckoutOpen(false); }
+          if (opening) { closeAllTrays(); hideRotbar(); if (!settingsPop.hidden) setSettingsOpen(false); if (!plusPop.hidden) setPlusOpen(false); if (!checkoutPop.hidden) setCheckoutOpen(false); if (acctPop && !acctPop.hidden) setAcctOpen(false); }
           setShopOpen(opening);
         });
         shopPop.addEventListener('click', function (ev) { ev.stopPropagation(); });
@@ -1813,7 +1897,7 @@
         plusBtn.addEventListener('click', function (ev) {
           ev.stopPropagation();
           var opening = plusPop.hidden;
-          if (opening) { closeAllTrays(); hideRotbar(); if (!settingsPop.hidden) setSettingsOpen(false); if (!shopPop.hidden) setShopOpen(false); if (!checkoutPop.hidden) setCheckoutOpen(false); }
+          if (opening) { closeAllTrays(); hideRotbar(); if (!settingsPop.hidden) setSettingsOpen(false); if (!shopPop.hidden) setShopOpen(false); if (!checkoutPop.hidden) setCheckoutOpen(false); if (acctPop && !acctPop.hidden) setAcctOpen(false); }
           setPlusOpen(opening);
         });
         plusPop.addEventListener('click', function (ev) { ev.stopPropagation(); });
@@ -1947,12 +2031,21 @@
         });
 
         /* Restore — Plus state, owned items, room placement, and
-           the cart come back from the local record exactly as they
+           the cart come back from a saved record exactly as they
            were left. Owned items that were in the room are placed
            again; owned items out of the room simply wait on the
-           toggle, exactly as they were left. */
-        (function restoreState() {
-          var s = loadState();
+           toggle, exactly as they were left. At first load the
+           record is the local one; when an account is logged in,
+           the server's record is fed through this same routine and
+           wins outright — the live state is cleared first, so
+           nothing survives that the record doesn't name. */
+        function applyState(s) {
+          var wasPlaced = {};
+          Object.keys(ITEM_DEFS).forEach(function (id) { wasPlaced[id] = !!placedItems[id]; });
+          ownedItems = {};
+          placedItems = {};
+          cartItems = {};
+          plusOn = false;
           if (s) {
             if (s.owned) {
               Object.keys(s.owned).forEach(function (id) {
@@ -1973,11 +2066,14 @@
           }
           Object.keys(ITEM_DEFS).forEach(function (id) {
             renderShopItem(id);
-            if (placedItems[id] && room3d) room3d.setItem(id, true);
+            if (!room3d) return;
+            if (placedItems[id]) room3d.setItem(id, true);
+            else if (wasPlaced[id]) room3d.setItem(id, false);
           });
           renderCartRow();
-          if (plusOn) applyPlusUI();
-        })();
+          applyPlusUI();
+        }
+        applyState(loadState());
 
         /* Settings gear — the little translucent cog in the top-right
            corner of the screen. It opens the panel's options: the same
@@ -2015,7 +2111,7 @@
           var t = ev.target;
           var glWrap = document.getElementById('gl');
           if (glWrap && glWrap.contains(t)) return;
-          if (tray.contains(t) || trayChair.contains(t) || trayRug.contains(t) || trayShelf.contains(t) || rotbar.contains(t) || shopPop.contains(t) || plusPop.contains(t) || checkoutPop.contains(t)) return;
+          if (tray.contains(t) || trayChair.contains(t) || trayRug.contains(t) || trayShelf.contains(t) || rotbar.contains(t) || shopPop.contains(t) || plusPop.contains(t) || checkoutPop.contains(t) || (acctPop && acctPop.contains(t))) return;
           closeAllOptions();
         });
         document.addEventListener('keydown', function (ev) { if (ev.key === 'Escape') closeAllOptions(); });
@@ -2176,7 +2272,14 @@
            full fifteen seconds, the timer counts from the reply,
            and her ears re-open after it for a spoken follow-up —
            spoken and typed messages reset it exactly the same. */
+        /* Logged in, the words go to Relic's real brain on the
+           server (see the account section below); logged out, the
+           demo engine below answers, exactly as it always has. */
         function deliverMessage(text) {
+          if (authToken) { deliverServerMessage(text); return; }
+          deliverDemoMessage(text);
+        }
+        function deliverDemoMessage(text) {
           lastExchangeAt = Date.now();
           sndBoop();
           perk();
@@ -2212,6 +2315,230 @@
         });
 
         runBoot();
+
+        /* ============ Account + server (the librarian) ============
+           The hub talks to Relic's own server: accounts, a saved
+           room that follows the account between devices, and the
+           real brain for chat. All of it is progressive — logged
+           out, the page is the same self-contained demo it always
+           was (local record, scripted replies); logged in, the
+           room record syncs to /save and words typed or spoken to
+           Relic are answered by POST /chat instead. The session
+           rides in localStorage under relic_auth; a 401 from any
+           signed call means the token died, and the page falls
+           back to logged-out demo mode quietly. */
+        var API_BASE = 'https://relic.heckticgames.com';
+        var AUTH_KEY = 'relic_auth';
+        var authToken = null;
+        var authEmail = null;
+        try {
+          var savedAuth = JSON.parse(localStorage.getItem(AUTH_KEY) || 'null');
+          if (savedAuth && savedAuth.token) {
+            authToken = savedAuth.token;
+            authEmail = savedAuth.email || null;
+          }
+        } catch (e) {}
+        var acctBtn = document.getElementById('btn-acct');
+        var acctPop = document.getElementById('acct-pop');
+        var acctForm = document.getElementById('acct-form');
+        var acctEmailInput = document.getElementById('acct-email');
+        var acctPassInput = document.getElementById('acct-password');
+        var acctError = document.getElementById('acct-error');
+        var acctSubmit = document.getElementById('acct-submit');
+        var acctToggle = document.getElementById('acct-toggle');
+        var acctWho = document.getElementById('acct-who');
+        var acctWhoEmail = document.getElementById('acct-who-email');
+        var acctLogout = document.getElementById('acct-logout');
+        var acctMode = 'login';
+        var acctBusy = false;
+
+        function setAcctOpen(open) {
+          acctPop.hidden = !open;
+          acctBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+          if (open) acctError.hidden = true;
+        }
+        function updateAuthUI() {
+          var loggedIn = !!authToken;
+          acctBtn.textContent = loggedIn ? (authEmail || 'Your account') : 'Log in';
+          acctForm.hidden = loggedIn;
+          acctWho.hidden = !loggedIn;
+          if (loggedIn) acctWhoEmail.textContent = authEmail || '';
+        }
+        function clearAuth() {
+          authToken = null;
+          authEmail = null;
+          try { localStorage.removeItem(AUTH_KEY); } catch (e) {}
+          updateAuthUI();
+        }
+        function setAuth(token, email) {
+          authToken = token;
+          authEmail = email;
+          try { localStorage.setItem(AUTH_KEY, JSON.stringify({ token: token, email: email })); } catch (e) {}
+          updateAuthUI();
+        }
+        /* one signed fetch for the whole account layer: resolves
+           with {status, data} for every HTTP answer (errors are
+           data here, never exceptions), rejects only when the
+           server can't be reached at all, and treats a 401 as the
+           token's death wherever it turns up */
+        function apiFetch(path, opts) {
+          opts = opts || {};
+          var headers = { 'Content-Type': 'application/json' };
+          if (authToken) headers['Authorization'] = 'Bearer ' + authToken;
+          return fetch(API_BASE + path, {
+            method: opts.method || 'GET',
+            headers: headers,
+            body: opts.body || null
+          }).then(function (res) {
+            if (res.status === 401 && authToken) clearAuth();
+            return res.json().then(function (data) {
+              return { status: res.status, data: data || {} };
+            }, function () {
+              return { status: res.status, data: {} };
+            });
+          });
+        }
+        /* save sync: saveState() already lands every room change
+           in the local record; while logged in, the same record
+           goes up to /save too — debounced, so a burst of dragging
+           or shopping settles into one send ~800ms after the last
+           change */
+        var serverSaveTimer = null;
+        function scheduleServerSave() {
+          if (!authToken) return;
+          clearTimeout(serverSaveTimer);
+          serverSaveTimer = setTimeout(function () {
+            serverSaveTimer = null;
+            if (!authToken) return;
+            apiFetch('/save', { method: 'PUT', body: JSON.stringify(stateSnapshot()) }).then(function () {}, function () {});
+          }, 800);
+        }
+        /* pull the account's room down: the server record goes
+           through the same restore routine the local record uses
+           and wins, then becomes the local cache. No record yet
+           (data: null) means this device's room becomes the
+           account's room instead. */
+        function syncFromServer() {
+          if (!authToken) return;
+          apiFetch('/save').then(function (r) {
+            if (r.status !== 200) return;
+            if (r.data && r.data.data) {
+              applyState(r.data.data);
+              writeLocalState();
+            } else if (authToken) {
+              apiFetch('/save', { method: 'PUT', body: JSON.stringify(stateSnapshot()) }).then(function () {}, function () {});
+            }
+          }, function () {});
+        }
+        function showAcctError(msg) {
+          acctError.textContent = msg;
+          acctError.hidden = false;
+        }
+        acctBtn.addEventListener('click', function (ev) {
+          ev.stopPropagation();
+          var opening = acctPop.hidden;
+          if (opening) { closeAllTrays(); hideRotbar(); if (!settingsPop.hidden) setSettingsOpen(false); if (!shopPop.hidden) setShopOpen(false); if (!plusPop.hidden) setPlusOpen(false); if (!checkoutPop.hidden) setCheckoutOpen(false); }
+          setAcctOpen(opening);
+        });
+        acctPop.addEventListener('click', function (ev) { ev.stopPropagation(); });
+        acctToggle.addEventListener('click', function () {
+          acctMode = acctMode === 'login' ? 'signup' : 'login';
+          acctSubmit.textContent = acctMode === 'login' ? 'Log in' : 'Create account';
+          acctToggle.textContent = acctMode === 'login' ? 'New here? Create an account' : 'Already have an account? Log in';
+          acctPassInput.setAttribute('autocomplete', acctMode === 'login' ? 'current-password' : 'new-password');
+          acctError.hidden = true;
+        });
+        acctForm.addEventListener('submit', function (ev) {
+          ev.preventDefault();
+          if (acctBusy) return;
+          var email = acctEmailInput.value.trim();
+          var pass = acctPassInput.value;
+          if (!email || !pass) { showAcctError('Enter an email and a password.'); return; }
+          acctBusy = true;
+          acctSubmit.disabled = true;
+          acctError.hidden = true;
+          fetch(API_BASE + (acctMode === 'login' ? '/auth/login' : '/auth/signup'), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: email, password: pass })
+          }).then(function (res) {
+            return res.json().then(function (data) {
+              return { status: res.status, data: data || {} };
+            }, function () {
+              return { status: res.status, data: {} };
+            });
+          }).then(function (r) {
+            acctBusy = false;
+            acctSubmit.disabled = false;
+            if ((r.status === 200 || r.status === 201) && r.data && r.data.token) {
+              setAuth(r.data.token, email);
+              acctPassInput.value = '';
+              setAcctOpen(false);
+              syncFromServer();
+              say('Logged in — Relic now saves the room to this account, and the smart brain answers here.', 5600);
+            } else {
+              showAcctError((r.data && r.data.error) || 'Something went wrong — try again.');
+            }
+          }, function () {
+            acctBusy = false;
+            acctSubmit.disabled = false;
+            showAcctError('Could not reach the server — check the connection and try again.');
+          });
+        });
+        acctLogout.addEventListener('click', function () {
+          clearAuth();
+          setAcctOpen(false);
+          say('Logged out. Relic is back to the demo brain on this device.', 4600);
+        });
+        /* the real brain: when logged in, typed words and final
+           Hey transcripts alike land here instead of the demo
+           pools. The reply renders in the pill through the same
+           say() as every other line, and inside a Hey conversation
+           it holds for the full fifteen-second linger and re-opens
+           her ears, exactly like a demo reply. Errors are answered
+           in character, never in jargon; a 401 hands the words to
+           the demo pools, because the dead token already dropped
+           the page back to demo mode. */
+        function deliverServerMessage(text) {
+          lastExchangeAt = Date.now();
+          sndBoop();
+          perk();
+          wiggle();
+          express('surprised', 0.7);
+          var inConv = convActive;
+          if (inConv) { clearTimeout(convTimer); convTimer = null; }
+          function showLine(line) {
+            express('happy', 2.6);
+            if (inConv && convActive) {
+              say(line, LINGER_MS);
+              scheduleLinger();
+              scheduleFollowUpListening(450);
+            } else {
+              say(line, 5200);
+            }
+          }
+          apiFetch('/chat', { method: 'POST', body: JSON.stringify({ message: text }) }).then(function (r) {
+            if (r.status === 401) { deliverDemoMessage(text); return; }
+            if (r.status === 200 && r.data && r.data.reply) {
+              showLine(r.data.reply);
+            } else if (r.status === 403) {
+              if (!shopPop.hidden) setShopOpen(false);
+              if (!checkoutPop.hidden) setCheckoutOpen(false);
+              setPlusOpen(true);
+              showLine("Relic's smart brain is in private beta for now — the Plus panel below has the details.");
+            } else if (r.status === 429) {
+              showLine("That's Relic's daily chat limit reached — more talking tomorrow.");
+            } else if (r.status === 503) {
+              showLine("Relic's smart brain isn't connected yet — check back soon.");
+            } else {
+              showLine("Relic couldn't reach the smart brain just now — try again in a moment.");
+            }
+          }, function () {
+            showLine("Relic couldn't reach the smart brain just now — try again in a moment.");
+          });
+        }
+        updateAuthUI();
+        if (authToken) syncFromServer();
 
         /* ================================================================
            The 3D room — Three.js. Blank room, one ghost, buyable things.
