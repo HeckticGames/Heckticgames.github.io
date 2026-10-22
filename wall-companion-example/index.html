@@ -1545,6 +1545,7 @@
           clearTimeout(convListenTimer); convListenTimer = null;
           wakeMicUntil = 0;
           stopCurrentListening();
+          stopVoice();
           micRefresh();
           syncWakeLabel();
           if (room3d && room3d.leaveApproach) room3d.leaveApproach();
@@ -1556,6 +1557,7 @@
           clearTimeout(convListenTimer); convListenTimer = null;
           wakeMicUntil = 0;
           stopCurrentListening();
+          stopVoice();
           micRefresh();
           syncWakeLabel();
         }
@@ -1565,7 +1567,11 @@
           if (!convActive || !SpeechRec || micBlocked) return;
           convListenTimer = setTimeout(function () {
             convListenTimer = null;
-            if (!convActive || voiceActive || micBlocked) return;
+            /* never while she's talking out loud: her own voice
+               through the speakers is exactly what the mic would
+               hear (the self-answer loop) — the speech-end hook
+               in the voice layer re-schedules when she's done */
+            if (!convActive || voiceActive || micBlocked || voicePlaying) return;
             startListening(true);
           }, delay || 400);
         }
@@ -1602,6 +1608,7 @@
           micdot.classList.toggle('show', voiceActive || Date.now() < wakeMicUntil);
         }
         function startListening(followUp) {
+          if (voicePlaying) return false;
           if (!SpeechRec) {
             if (!followUp) say("My ears don't work here — type to me below.", 5600);
             return false;
@@ -1620,6 +1627,7 @@
           var heard = false, spokeFallback = false;
           rec.onstart = function () { voiceActive = true; micRefresh(); };
           rec.onresult = function (ev) {
+            if (voicePlaying) return;
             var words = '';
             for (var i = ev.resultIndex; i < ev.results.length; i++) {
               if (ev.results[i].isFinal) words += ev.results[i][0].transcript;
@@ -2741,18 +2749,41 @@
         try { voiceOn = localStorage.getItem(VOICE_KEY) !== '0'; } catch (e) {}
         var voiceAudio = null;
         var voiceUrl = null;
+        /* true while her spoken reply is actually playing — the
+           listening layer checks this before opening the mic, so
+           she never hears (and answers) herself */
+        var voicePlaying = false;
+        function onVoiceEnded() {
+          if (!voicePlaying) return;
+          voicePlaying = false;
+          /* her turn is over: if a conversation is still holding
+             her close, open her ears again for the answer */
+          if (convActive) scheduleFollowUpListening(500);
+        }
+        function ensureVoiceAudio() {
+          if (voiceAudio) return voiceAudio;
+          try { voiceAudio = new Audio(); } catch (e) { return null; }
+          voiceAudio.addEventListener('ended', onVoiceEnded);
+          voiceAudio.addEventListener('error', onVoiceEnded);
+          return voiceAudio;
+        }
         /* browsers only let a page make noise after the person
            has touched it: build the player on the first tap
            anywhere, so later plays are allowed */
-        document.addEventListener('pointerdown', function () {
-          if (!voiceAudio) { try { voiceAudio = new Audio(); } catch (e) {} }
-        }, { once: true });
+        document.addEventListener('pointerdown', function () { ensureVoiceAudio(); }, { once: true });
         function stopVoice() {
+          voicePlaying = false;
           if (voiceAudio) { try { voiceAudio.pause(); } catch (e) {} }
           if (voiceUrl) { try { URL.revokeObjectURL(voiceUrl); } catch (e) {} voiceUrl = null; }
         }
         function speakReply(text) {
           if (!voiceOn || !authToken || !text) return;
+          /* ears closed while she talks: kill any live listening
+             session and any pending follow-up NOW, and again right
+             before the sound starts — the fetch takes a moment,
+             and a follow-up timer could fire in between */
+          stopCurrentListening();
+          clearTimeout(convListenTimer); convListenTimer = null;
           fetch(API_BASE + '/speak', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
@@ -2763,12 +2794,19 @@
             return res.blob();
           }).then(function (blob) {
             if (!blob) return;
-            if (!voiceAudio) { try { voiceAudio = new Audio(); } catch (e) { return; } }
+            if (!ensureVoiceAudio()) return;
+            stopCurrentListening();
             stopVoice();
             voiceUrl = URL.createObjectURL(blob);
             voiceAudio.src = voiceUrl;
+            voicePlaying = true;
             var p = voiceAudio.play();
-            if (p && p.catch) p.catch(function () {});
+            if (p && p.catch) p.catch(function () {
+              /* the browser refused the sound after all: she's not
+                 speaking, so the conversation may listen again */
+              voicePlaying = false;
+              if (convActive) scheduleFollowUpListening(500);
+            });
           }, function () {});
         }
         var setVoiceRow = document.getElementById('set-voice');
