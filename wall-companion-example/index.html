@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="color-scheme" content="light dark" />
     <link rel="icon" href="data:," />
-    <title>Wall Companion Example</title>
+    <title>Relic</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:ital,wght@0,400;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet" />
@@ -1363,12 +1363,15 @@
               if (id === 'chair') showTray(trayChair);
               if (id === 'shelf') showTray(trayShelf);
               if (id === 'chair' || id === 'shelf') { showRotbar(id); } else { hideRotbar(); }
-              if (room3d) room3d.visit(id);
+              /* no visit on a tap: she stays where she is so she is
+                 never in the way while the user is moving or adjusting
+                 the piece. She still visits on her own wander, after a
+                 purchase, and after a fabric/finish pick. */
               /* opening a customization tray is silent: she only
                  speaks about the chair or the shelf AFTER a fabric
                  or finish is actually picked (see sayCustomize).
-                 Items with no tray (lights, pumpkin) keep their
-                 visit line — no choosing is happening there. */
+                 Items with no tray (lights, pumpkin) still get a
+                 spoken line, said from wherever she happens to be. */
               if (id !== 'chair' && id !== 'shelf') {
                 say(visitLines[id] || "That's mine. I love it here.", 3200);
               }
@@ -1756,13 +1759,20 @@
           });
         }
         bindTraySwatches(trayChair, function (sw) {
-          if (room3d) room3d.setChairColor(sw.getAttribute('data-m'), sw.getAttribute('data-c'));
+          currentChairM = sw.getAttribute('data-m');
+          currentChairC = sw.getAttribute('data-c');
+          if (room3d) room3d.setChairColor(currentChairM, currentChairC);
+          saveState();
         }, "New chair color. That's the good seat now.");
         bindTraySwatches(trayRug, function (sw) {
-          if (room3d) room3d.setRugColor(sw.getAttribute('data-c'));
+          currentRugColor = sw.getAttribute('data-c');
+          if (room3d) room3d.setRugColor(currentRugColor);
+          saveState();
         }, "New rug color. It really ties the room together.");
         bindTraySwatches(trayShelf, function (sw) {
-          if (room3d) room3d.setShelfColor(sw.getAttribute('data-c'));
+          currentShelfColor = sw.getAttribute('data-c');
+          if (room3d) room3d.setShelfColor(currentShelfColor);
+          saveState();
         }, "New shelf color. The books approve.");
         bindTraySwatches(setFloor, function (sw) {
           currentFloorTone = sw.getAttribute('data-tone');
@@ -1811,18 +1821,27 @@
            hub works exactly the same without it. */
         var STORE_KEY = 'relic-hub-state-v1';
         /* Colors and finishes ride in the same record: her two
-           ghost colors, the floor tone, and the wall paint. The
-           defaults are the active swatches in the markup — teal
-           ghost, dark oak floor, warm cream walls — and a record
-           that predates these keys simply falls back to them. */
+           ghost colors, the floor tone, the wall paint, and the
+           furniture's own colors — the chair's fabric pair, the
+           rug's color, the shelf's finish. The defaults are the
+           active swatches in the markup and a record that predates
+           these keys simply falls back to them. */
         var DEFAULT_GHOST_C1 = '#5ff0d8';
         var DEFAULT_GHOST_C2 = '#17bfa5';
         var DEFAULT_FLOOR_TONE = '#6b4a2d';
         var DEFAULT_WALL_PAINT = '#ffe2c0';
+        var DEFAULT_CHAIR_M = '#c96f4a';
+        var DEFAULT_CHAIR_C = '#e08e63';
+        var DEFAULT_RUG_COLOR = '#8d8f94';
+        var DEFAULT_SHELF_COLOR = '#a26c39';
         var currentGhostC1 = DEFAULT_GHOST_C1;
         var currentGhostC2 = DEFAULT_GHOST_C2;
         var currentFloorTone = DEFAULT_FLOOR_TONE;
         var currentWallPaint = DEFAULT_WALL_PAINT;
+        var currentChairM = DEFAULT_CHAIR_M;
+        var currentChairC = DEFAULT_CHAIR_C;
+        var currentRugColor = DEFAULT_RUG_COLOR;
+        var currentShelfColor = DEFAULT_SHELF_COLOR;
         function markSwatchActive(container, attr, value) {
           if (!container) return;
           container.querySelectorAll('.swatch').forEach(function (s) {
@@ -1851,6 +1870,26 @@
           if (room3d) room3d.setWallPaint(paint);
           markSwatchActive(setWall, 'data-paint', paint);
         }
+        function applyChairColor(m, c) {
+          currentChairM = m;
+          currentChairC = c;
+          if (room3d) room3d.setChairColor(m, c);
+          if (trayChair) {
+            trayChair.querySelectorAll('.swatch').forEach(function (s) {
+              s.classList.toggle('active', s.getAttribute('data-m') === m && s.getAttribute('data-c') === c);
+            });
+          }
+        }
+        function applyRugColor(hex) {
+          currentRugColor = hex;
+          if (room3d) room3d.setRugColor(hex);
+          markSwatchActive(trayRug, 'data-c', hex);
+        }
+        function applyShelfColor(hex) {
+          currentShelfColor = hex;
+          if (room3d) room3d.setShelfColor(hex);
+          markSwatchActive(trayShelf, 'data-c', hex);
+        }
         /* A blob only counts as a hub record if it carries at
            least one key a hub record can carry. Anything else —
            a foreign object left under the account by some other
@@ -1860,6 +1899,7 @@
           if (!blob || typeof blob !== 'object') return false;
           return ('plus' in blob) || ('owned' in blob) || ('placed' in blob) || ('cart' in blob) ||
             ('ghostC1' in blob) || ('ghostC2' in blob) || ('floorTone' in blob) || ('wallPaint' in blob) ||
+            ('chairM' in blob) || ('chairC' in blob) || ('rugColor' in blob) || ('shelfColor' in blob) ||
             ('pos' in blob);
         }
         /* Where every placed piece currently sits, pulled live from
@@ -1898,6 +1938,10 @@
             ghostC2: currentGhostC2,
             floorTone: currentFloorTone,
             wallPaint: currentWallPaint,
+            chairM: currentChairM,
+            chairC: currentChairC,
+            rugColor: currentRugColor,
+            shelfColor: currentShelfColor,
             pos: collectPositions()
           };
         }
@@ -2200,6 +2244,12 @@
           );
           applyFloorTone((s && typeof s.floorTone === 'string' && s.floorTone) ? s.floorTone : DEFAULT_FLOOR_TONE);
           applyWallPaint((s && typeof s.wallPaint === 'string' && s.wallPaint) ? s.wallPaint : DEFAULT_WALL_PAINT);
+          applyChairColor(
+            (s && typeof s.chairM === 'string' && s.chairM) ? s.chairM : DEFAULT_CHAIR_M,
+            (s && typeof s.chairC === 'string' && s.chairC) ? s.chairC : DEFAULT_CHAIR_C
+          );
+          applyRugColor((s && typeof s.rugColor === 'string' && s.rugColor) ? s.rugColor : DEFAULT_RUG_COLOR);
+          applyShelfColor((s && typeof s.shelfColor === 'string' && s.shelfColor) ? s.shelfColor : DEFAULT_SHELF_COLOR);
           Object.keys(ITEM_DEFS).forEach(function (id) {
             renderShopItem(id);
             if (!room3d) return;
