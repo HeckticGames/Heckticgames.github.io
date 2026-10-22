@@ -1544,6 +1544,11 @@
         }
         function endConversation() {
           if (!convActive) return;
+          /* never walk away from a live moment: if she's talking
+             herself, or he's mid-sentence and his voice is
+             reaching the recognizer, look again in five seconds
+             instead of leaving */
+          if (voicePlaying || hearingSpeech) { scheduleLinger(POST_SPEAK_LINGER_MS); return; }
           convActive = false;
           clearTimeout(convTimer); convTimer = null;
           clearTimeout(convListenTimer); convListenTimer = null;
@@ -1611,6 +1616,11 @@
         function micRefresh() {
           micdot.classList.toggle('show', voiceActive || Date.now() < wakeMicUntil);
         }
+        /* true while the recognizer is hearing his voice — set by
+           live interim results, cleared when a session ends. The
+           drift-back guard reads it: she never walks away from a
+           man mid-sentence. */
+        var hearingSpeech = false;
         function startListening(followUp) {
           if (voicePlaying) return false;
           if (!SpeechRec) {
@@ -1624,7 +1634,12 @@
             return false;
           }
           rec.lang = 'en-US';
-          rec.interimResults = false;
+          /* interim results ON: she hears his words as he says
+             them, not only after he fully stops — a long sentence
+             used to produce silence at this layer until the end,
+             so every timer in the room thought he'd finished
+             while he was still mid-thought */
+          rec.interimResults = true;
           rec.maxAlternatives = 1;
           currentRec = rec;
           var sessionExchange = lastExchangeAt;
@@ -1633,8 +1648,19 @@
           rec.onresult = function (ev) {
             if (voicePlaying) return;
             var words = '';
+            var anyWords = '';
             for (var i = ev.resultIndex; i < ev.results.length; i++) {
+              anyWords += ev.results[i][0].transcript;
               if (ev.results[i].isFinal) words += ev.results[i][0].transcript;
+            }
+            if (anyWords.trim() && convActive) {
+              /* he's talking right now — these are his words
+                 half-formed, arriving live. The sound of his
+                 voice holds her here: push the drift-back out
+                 while he speaks, or a long sentence outlasts
+                 the countdown and she leaves mid-thought */
+              hearingSpeech = true;
+              scheduleLinger();
             }
             words = words.trim();
             if (words) {
@@ -1662,6 +1688,7 @@
           };
           rec.onend = function () {
             voiceActive = false;
+            hearingSpeech = false;
             if (currentRec === rec) currentRec = null;
             micRefresh();
             if (!heard && !spokeFallback && !followUp && lastExchangeAt === sessionExchange) {
