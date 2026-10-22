@@ -4182,13 +4182,14 @@
             }
             if (id === 'chair') {
               p = chairGroup.position;
-              so = rotOff(chairGroup, 0.95, 1.7);
               /* she doesn't sit anymore — the CHAIR does the act
                  now: it wobbles, levitates, and drops back down
-                 (see the chair-like act in startAct), and she
-                 hovers in front of it at her usual height and
-                 watches, facing it. */
-              return { spot: new THREE.Vector3(p.x + so.x, 0.62, p.z + so.z), anchor: new THREE.Vector3(p.x, 0.8, p.z), dur: 5.0 };
+                 (see the chair-like act in startAct). She watches
+                 from BESIDE it, on the room-center side: in front
+                 of the piece her body hides the float entirely
+                 (Evan caught this on the stool). */
+              var sideC = p.x <= 0 ? 1.45 : -1.45;
+              return { spot: new THREE.Vector3(p.x + sideC, 0.62, p.z + 0.3), anchor: new THREE.Vector3(p.x, 0.8, p.z), dur: 5.0 };
             }
             if (id === 'shelf') {
               p = shelfGroup.position;
@@ -4202,10 +4203,10 @@
             }
             if (id === 'stool') {
               p = stoolGroup.position;
-              so = rotOff(stoolGroup, 0.8, 1.45);
-              /* same as the chair: she hovers in front and watches
-                 it float */
-              return { spot: new THREE.Vector3(p.x + so.x, 0.62, p.z + so.z), anchor: new THREE.Vector3(p.x, 0.75, p.z), dur: 5.0 };
+              /* same as the chair: she hovers BESIDE it and
+                 watches it float — never in front of it */
+              var sideS = p.x <= 0 ? 1.3 : -1.3;
+              return { spot: new THREE.Vector3(p.x + sideS, 0.62, p.z + 0.3), anchor: new THREE.Vector3(p.x, 0.75, p.z), dur: 5.0 };
             }
             p = pumpkinGroup.position;
             return { spot: new THREE.Vector3(p.x - 1.35, 0.55, p.z + 0.4), anchor: new THREE.Vector3(p.x, 0.6, p.z), dur: 5.0 };
