@@ -3363,7 +3363,7 @@
           var gtx = ghostCanvas.getContext('2d');
           var ghostTex = new THREE.CanvasTexture(ghostCanvas);
           ghostTex.encoding = THREE.sRGBEncoding;
-          var drawState = { sy: 1, s: 1, blink: 1, happy: false, glance: 0, pulse: 1, sick: 0, sickSpin: 0 };
+          var drawState = { sy: 1, s: 1, blink: 1, happy: false, glance: 0, pulse: 1, sick: 0, sickSpin: 0, reading: false };
           var spinRot = 0, wiggleRot = 0;
 
           function rgbOf(hex) { var n = parseInt(hex.slice(1), 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; }
@@ -3515,6 +3515,74 @@
             }
             g.closePath();
             g.fillStyle = mixHex(c1, '#ffffff', 0.5); g.fill();
+            /* reading props: while the chair act runs she wears
+               glasses and holds an open book. Both ride on
+               drawState.reading, which the animate loop derives
+               fresh each frame from the act state, so they vanish
+               the moment the act ends. The glasses sit on the same
+               eye centers the face uses (cx ± ex, shifted by the
+               same glance offset gx), so they stay on her eyes
+               through blinks, glances, and expressions. */
+            if (drawState.reading) {
+              g.save();
+              g.strokeStyle = 'rgba(23,48,43,0.88)';
+              g.lineWidth = 6;
+              [-1, 1].forEach(function (s) {
+                g.beginPath();
+                g.ellipse(cx + s * ex + gx, ey, 37, 41, 0, 0, Math.PI * 2);
+                g.stroke();
+                /* a short temple arm out toward the sheet's edge */
+                g.beginPath();
+                g.moveTo(cx + s * (ex + 36) + gx, ey - 5);
+                g.lineTo(cx + s * 124 + gx, ey - 15);
+                g.stroke();
+              });
+              /* the bridge, bowing up between the frames */
+              g.beginPath();
+              g.moveTo(cx - (ex - 37) + gx, ey - 3);
+              g.quadraticCurveTo(cx + gx, ey - 16, cx + (ex - 37) + gx, ey - 3);
+              g.stroke();
+              g.restore();
+              /* the open book: a darker cover peeking out around
+                 two pale pages in a gentle V, held low in front of
+                 her, its top edge tucking just under the hex heart */
+              var bkTop = 402, bkBot = 450;
+              g.save();
+              g.beginPath();
+              g.moveTo(cx, bkTop + 4);
+              g.quadraticCurveTo(cx - 48, bkTop - 4, cx - 96, bkTop + 2);
+              g.lineTo(cx - 96, bkBot);
+              g.quadraticCurveTo(cx - 48, bkBot - 6, cx, bkBot + 4);
+              g.quadraticCurveTo(cx + 48, bkBot - 6, cx + 96, bkBot);
+              g.lineTo(cx + 96, bkTop + 2);
+              g.quadraticCurveTo(cx + 48, bkTop - 4, cx, bkTop + 4);
+              g.closePath();
+              g.fillStyle = mixHex(c2, '#0d3a33', 0.5); g.fill();
+              g.beginPath();
+              g.moveTo(cx, bkTop + 9);
+              g.quadraticCurveTo(cx - 45, bkTop + 2, cx - 89, bkTop + 8);
+              g.lineTo(cx - 89, bkBot - 6);
+              g.quadraticCurveTo(cx - 45, bkBot - 11, cx, bkBot - 1);
+              g.quadraticCurveTo(cx + 45, bkBot - 11, cx + 89, bkBot - 6);
+              g.lineTo(cx + 89, bkTop + 8);
+              g.quadraticCurveTo(cx + 45, bkTop + 2, cx, bkTop + 9);
+              g.closePath();
+              g.fillStyle = mixHex(c1, '#ffffff', 0.86); g.fill();
+              /* the spine crease and a few faint print lines */
+              g.strokeStyle = 'rgba(23,48,43,0.35)'; g.lineWidth = 3;
+              g.beginPath(); g.moveTo(cx, bkTop + 10); g.lineTo(cx, bkBot - 2); g.stroke();
+              g.strokeStyle = 'rgba(23,48,43,0.16)'; g.lineWidth = 4;
+              [-1, 1].forEach(function (s) {
+                for (var ln = 0; ln < 3; ln++) {
+                  var ly = bkTop + 20 + ln * 9;
+                  g.beginPath();
+                  g.moveTo(cx + s * 14, ly);
+                  g.lineTo(cx + s * (66 - ln * 7), ly + 1.5);
+                  g.stroke();
+                }
+              });
+              g.restore();
+            }
             ghostTex.needsUpdate = true;
           }
           drawGhost();
@@ -3810,7 +3878,7 @@
           function spotFor(id) {
             var p, so, ao;
             if (id === 'lights') {
-              return { spot: new THREE.Vector3(lightsGroup.position.x, 3.1, -1.9), anchor: new THREE.Vector3(lightsGroup.position.x, 5.0, -3.3), dur: 2.6 };
+              return { spot: new THREE.Vector3(lightsGroup.position.x, 3.1, -1.9), anchor: new THREE.Vector3(lightsGroup.position.x, 5.0, -3.3), dur: 5.0 };
             }
             if (id === 'chair') {
               p = chairGroup.position;
@@ -3823,15 +3891,15 @@
                  cushion instead. At the new size that perch sits a
                  touch higher than their floor hover, so they float
                  up onto the chair rather than sinking into it. */
-              return { spot: new THREE.Vector3(p.x + so.x, 1.07, p.z + so.z), anchor: new THREE.Vector3(p.x + ao.x, 1.2, p.z + ao.z), dur: 3.0 };
+              return { spot: new THREE.Vector3(p.x + so.x, 1.07, p.z + so.z), anchor: new THREE.Vector3(p.x + ao.x, 1.2, p.z + ao.z), dur: 5.0 };
             }
             if (id === 'shelf') {
               p = shelfGroup.position;
               so = rotOff(shelfGroup, 0, 1.27);
-              return { spot: new THREE.Vector3(p.x + so.x, 1.0, p.z + so.z), anchor: new THREE.Vector3(p.x, 1.5, p.z), dur: 2.6 };
+              return { spot: new THREE.Vector3(p.x + so.x, 1.0, p.z + so.z), anchor: new THREE.Vector3(p.x, 1.5, p.z), dur: 5.0 };
             }
             p = pumpkinGroup.position;
-            return { spot: new THREE.Vector3(p.x - 1.35, 0.55, p.z + 0.4), anchor: new THREE.Vector3(p.x, 0.6, p.z), dur: 2.6 };
+            return { spot: new THREE.Vector3(p.x - 1.35, 0.55, p.z + 0.4), anchor: new THREE.Vector3(p.x, 0.6, p.z), dur: 5.0 };
           }
           function goTo(v, after) {
             ghostState.target.copy(v);
@@ -3857,6 +3925,7 @@
             var start = spinRot;
             tween(0.75, function (k) { spinRot = start + k * Math.PI * 2; }, function () { spinRot = 0; });
           }
+          var shelfBrowseOn = false;
           function startAct(id) {
             var def = spotFor(id);
             ghostState.mode = 'act';
@@ -3865,11 +3934,47 @@
             ghostState.targetRotY = Math.atan2(def.anchor.x - ghostGroup.position.x, def.anchor.z - ghostGroup.position.z);
             expressEyes((id === 'chair' || id === 'shelf') ? 'content' : 'happy', def.dur);
             if (id === 'lights') ghostState.twinkle = 1;
-            if (id === 'pumpkin') { ghostState.faceBoost = 1; spinGhost(); }
-            if (id === 'shelf' && shelfBooks.length) {
-              var bk = shelfBooks[Math.floor(Math.random() * shelfBooks.length)];
-              var rz = bk.rotation.z;
-              tween(0.9, function (k) { bk.rotation.z = rz + Math.sin(k * Math.PI * 3) * 0.16 * (1 - k); }, function () { bk.rotation.z = rz; });
+            if (id === 'pumpkin') {
+              ghostState.faceBoost = 1; spinGhost();
+              /* one more spin halfway through the longer act, but
+                 only if she's still there enjoying the pumpkin */
+              tween(2.5, function () {}, function () {
+                if (ghostState.mode === 'act' && ghostState.actItem === 'pumpkin') spinGhost();
+              });
+            }
+            if (id === 'shelf' && shelfBooks.length && !shelfBrowseOn) {
+              /* the five-second browse: the books shuffle in their
+                 slots — a wobble and a slide toward the room and
+                 back, each on its own phase. The tween always runs
+                 to completion (nothing cancels tweens), so the
+                 restore in done runs even if she's grabbed mid-act:
+                 every book lands back on its exact original transform. */
+              shelfBrowseOn = true;
+              var motionK = REDUCED ? 0.35 : 1;
+              var browseBooks = shelfBooks.map(function (bk2) {
+                return {
+                  bk: bk2, rz: bk2.rotation.z,
+                  px: bk2.position.x, py: bk2.position.y, pz: bk2.position.z,
+                  ph: Math.random() * Math.PI * 2,
+                  sp: 1.3 + Math.random() * 1.6,
+                  am: 0.6 + Math.random() * 0.7
+                };
+              });
+              tween(def.dur, function (k) {
+                var env = Math.sin(Math.min(1, k) * Math.PI);
+                browseBooks.forEach(function (b) {
+                  var w = Math.sin(k * Math.PI * 2 * b.sp + b.ph) * env * b.am;
+                  b.bk.rotation.z = b.rz + w * 0.13 * motionK;
+                  b.bk.position.z = b.pz + Math.max(0, Math.sin(k * Math.PI * 2 * b.sp * 0.6 + b.ph + 1.2)) * 0.055 * env * motionK;
+                  b.bk.position.x = b.px + Math.sin(k * Math.PI * 2 * b.sp * 0.45 + b.ph * 1.7) * 0.02 * env * motionK;
+                });
+              }, function () {
+                browseBooks.forEach(function (b) {
+                  b.bk.rotation.z = b.rz;
+                  b.bk.position.set(b.px, b.py, b.pz);
+                });
+                shelfBrowseOn = false;
+              });
             }
           }
           function visitItem(id) {
@@ -4223,8 +4328,11 @@
             starMat.opacity = nightMix * 0.9;
             ghostSprite.material.opacity = 0.94 + nightMix * 0.06;
 
-            /* pumpkin face glow */
-            ghostState.faceBoost = Math.max(0, ghostState.faceBoost - dt * 0.45);
+            /* pumpkin face glow: while she's at the pumpkin the
+               face stays lit for the whole act; away from it the
+               glow decays as before */
+            if (ghostState.mode === 'act' && ghostState.actItem === 'pumpkin') ghostState.faceBoost = 1;
+            else ghostState.faceBoost = Math.max(0, ghostState.faceBoost - dt * 0.45);
             var lit = Math.max(nightMix * 0.85, ghostState.faceBoost);
             pumpkinFaceMat.color.setHex(0x40260a).lerp(new THREE.Color(0xffc93a), lit);
 
@@ -4234,7 +4342,9 @@
                the room is lit by — the wall wash brightens behind
                each bulb and the floor pools deepen under the string,
                all breathing with the same per-bulb twinkle. */
-            ghostState.twinkle = Math.max(0, ghostState.twinkle - dt * 0.4);
+            /* the twinkle rides her whole lights act the same way */
+            if (ghostState.mode === 'act' && ghostState.actItem === 'lights') ghostState.twinkle = 1;
+            else ghostState.twinkle = Math.max(0, ghostState.twinkle - dt * 0.4);
             if (owned.lights) {
               var twBoost = ghostState.twinkle * 0.35;
               for (var bi = 0; bi < bulbMeshes.length; bi++) {
@@ -4340,6 +4450,9 @@
             drawState.glance = glanceX;
             /* hex heart: a slow pulse, brighter at night */
             drawState.pulse = 1 + Math.sin(elapsed * 2.2) * 0.07 + nightMix * 0.05;
+            /* reading look rides the chair act: derived fresh each
+               frame, so the glasses and book vanish the moment it ends */
+            drawState.reading = (g.mode === 'act' && g.actItem === 'chair');
             /* queasiness: ramps up fast once she's been shaken, holds
                while sickHoldT runs down, then eases off over a couple
                of seconds — the green cast, the spiral eyes, and the
