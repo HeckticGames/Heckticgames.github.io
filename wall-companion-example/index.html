@@ -2737,13 +2737,18 @@
         }
         /* ---- her spoken voice (v5): brain replies, read aloud ----
            When the smart brain answers, the hub also asks the
-           server to render that exact reply as speech (POST
-           /speak) and plays it back. Scripted demo lines stay
-           text-only — voice is the brain's, which is what Plus
-           pays for. The toggle lives in the gear settings
-           ("Voice replies") and is remembered on this device.
-           Voice trouble is silent trouble: any failure just
-           means that reply isn't spoken. */
+           server to render that reply as speech (POST /speak) and
+           plays it back. Scripted demo lines stay text-only —
+           voice is the brain's, which is what Plus pays for. The
+           toggle lives in the gear settings ("Voice replies") and
+           is remembered on this device. Voice trouble is silent
+           trouble: any failure just means that reply isn't spoken.
+
+           Speed (v5.1): she speaks the reply SENTENCE BY SENTENCE.
+           The first sentence is a tiny file, so it renders and
+           starts playing fast, while the rest render in parallel
+           behind it — instead of one long wait for the whole
+           reply's audio before a sound is heard. */
         var VOICE_KEY = 'relic_voice';
         var voiceOn = true;
         try { voiceOn = localStorage.getItem(VOICE_KEY) !== '0'; } catch (e) {}
@@ -2753,18 +2758,31 @@
            listening layer checks this before opening the mic, so
            she never hears (and answers) herself */
         var voicePlaying = false;
-        function onVoiceEnded() {
+        /* the sentence queue for the reply currently being spoken:
+           parts are fetched in parallel and played in order;
+           speakGen invalidates stale work whenever she's cut off */
+        var speakParts = [], speakFetches = [], speakPartIdx = 0, speakGen = 0;
+        function finishSpeaking() {
+          speakParts = []; speakFetches = []; speakPartIdx = 0;
           if (!voicePlaying) return;
           voicePlaying = false;
           /* her turn is over: if a conversation is still holding
              her close, open her ears again for the answer */
           if (convActive) scheduleFollowUpListening(500);
         }
+        function onAudioEnded() {
+          if (speakPartIdx < speakParts.length - 1) {
+            speakPartIdx++;
+            playSpeakPart();
+          } else {
+            finishSpeaking();
+          }
+        }
         function ensureVoiceAudio() {
           if (voiceAudio) return voiceAudio;
           try { voiceAudio = new Audio(); } catch (e) { return null; }
-          voiceAudio.addEventListener('ended', onVoiceEnded);
-          voiceAudio.addEventListener('error', onVoiceEnded);
+          voiceAudio.addEventListener('ended', onAudioEnded);
+          voiceAudio.addEventListener('error', finishSpeaking);
           return voiceAudio;
         }
         /* browsers only let a page make noise after the person
@@ -2772,19 +2790,14 @@
            anywhere, so later plays are allowed */
         document.addEventListener('pointerdown', function () { ensureVoiceAudio(); }, { once: true });
         function stopVoice() {
+          speakGen++;
           voicePlaying = false;
+          speakParts = []; speakFetches = []; speakPartIdx = 0;
           if (voiceAudio) { try { voiceAudio.pause(); } catch (e) {} }
           if (voiceUrl) { try { URL.revokeObjectURL(voiceUrl); } catch (e) {} voiceUrl = null; }
         }
-        function speakReply(text) {
-          if (!voiceOn || !authToken || !text) return;
-          /* ears closed while she talks: kill any live listening
-             session and any pending follow-up NOW, and again right
-             before the sound starts — the fetch takes a moment,
-             and a follow-up timer could fire in between */
-          stopCurrentListening();
-          clearTimeout(convListenTimer); convListenTimer = null;
-          fetch(API_BASE + '/speak', {
+        function fetchSpeakAudio(text) {
+          return fetch(API_BASE + '/speak', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
             body: JSON.stringify({ text: text })
@@ -2792,22 +2805,56 @@
             if (res.status === 401 && authToken) { clearAuth(); return null; }
             if (!res.ok) return null;
             return res.blob();
-          }).then(function (blob) {
-            if (!blob) return;
-            if (!ensureVoiceAudio()) return;
+          }).then(function (blob) { return blob || null; }, function () { return null; });
+        }
+        function splitSpeakParts(text) {
+          var raw = String(text).match(/[^.!?…]+[.!?…]*\s*/g) || [String(text)];
+          var parts = raw.map(function (s) { return s.trim(); }).filter(function (s) { return /[A-Za-z0-9]/.test(s); });
+          if (!parts.length) parts = [String(text).trim()];
+          if (parts.length > 3) {
+            var head = parts.slice(0, 2);
+            head.push(parts.slice(2).join(' '));
+            parts = head;
+          }
+          return parts;
+        }
+        function playSpeakPart() {
+          var gen = speakGen;
+          var idx = speakPartIdx;
+          if (!voiceOn || idx >= speakParts.length) return;
+          speakFetches[idx].then(function (blob) {
+            if (gen !== speakGen || !voiceOn) return;
+            if (!blob) {
+              if (idx < speakParts.length - 1) { speakPartIdx++; playSpeakPart(); }
+              else finishSpeaking();
+              return;
+            }
+            if (!ensureVoiceAudio()) { finishSpeaking(); return; }
+            /* ears closed while she talks — again, right at the
+               moment of sound, in case a follow-up timer opened a
+               session while the audio was on its way */
             stopCurrentListening();
-            stopVoice();
+            if (voiceUrl) { try { URL.revokeObjectURL(voiceUrl); } catch (e) {} voiceUrl = null; }
             voiceUrl = URL.createObjectURL(blob);
             voiceAudio.src = voiceUrl;
             voicePlaying = true;
             var p = voiceAudio.play();
-            if (p && p.catch) p.catch(function () {
-              /* the browser refused the sound after all: she's not
-                 speaking, so the conversation may listen again */
-              voicePlaying = false;
-              if (convActive) scheduleFollowUpListening(500);
-            });
-          }, function () {});
+            if (p && p.catch) p.catch(function () { if (gen === speakGen) finishSpeaking(); });
+          });
+        }
+        function speakReply(text) {
+          if (!voiceOn || !authToken || !text) return;
+          /* ears closed while she talks: kill any live listening
+             session and any pending follow-up NOW (the per-part
+             hook in playSpeakPart closes them again at the exact
+             moment each part starts) */
+          stopCurrentListening();
+          clearTimeout(convListenTimer); convListenTimer = null;
+          stopVoice();
+          speakParts = splitSpeakParts(text);
+          speakPartIdx = 0;
+          speakFetches = speakParts.map(function (part) { return fetchSpeakAudio(part); });
+          playSpeakPart();
         }
         var setVoiceRow = document.getElementById('set-voice');
         function syncVoiceRow() {
