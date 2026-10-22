@@ -816,6 +816,7 @@
                   <div class="settings-pop" id="settings-pop" role="group" aria-label="Panel settings" hidden>
                     <button class="set-row" id="set-sound" aria-pressed="false"><span>Sound</span><span class="set-state">On</span></button>
                     <button class="set-row" id="set-night" aria-pressed="false"><span>Night mode</span><span class="set-state">Off</span></button>
+                    <button class="set-row" id="set-voice" aria-pressed="true"><span>Voice replies</span><span class="set-state">On</span></button>
                     <div class="set-colors">
                       <div class="set-colors-label">Floor tone</div>
                       <div class="set-swatches" id="set-floor" role="group" aria-label="Pick the floor's wood tone">
@@ -2726,6 +2727,66 @@
             });
           });
         }
+        /* ---- her spoken voice (v5): brain replies, read aloud ----
+           When the smart brain answers, the hub also asks the
+           server to render that exact reply as speech (POST
+           /speak) and plays it back. Scripted demo lines stay
+           text-only — voice is the brain's, which is what Plus
+           pays for. The toggle lives in the gear settings
+           ("Voice replies") and is remembered on this device.
+           Voice trouble is silent trouble: any failure just
+           means that reply isn't spoken. */
+        var VOICE_KEY = 'relic_voice';
+        var voiceOn = true;
+        try { voiceOn = localStorage.getItem(VOICE_KEY) !== '0'; } catch (e) {}
+        var voiceAudio = null;
+        var voiceUrl = null;
+        /* browsers only let a page make noise after the person
+           has touched it: build the player on the first tap
+           anywhere, so later plays are allowed */
+        document.addEventListener('pointerdown', function () {
+          if (!voiceAudio) { try { voiceAudio = new Audio(); } catch (e) {} }
+        }, { once: true });
+        function stopVoice() {
+          if (voiceAudio) { try { voiceAudio.pause(); } catch (e) {} }
+          if (voiceUrl) { try { URL.revokeObjectURL(voiceUrl); } catch (e) {} voiceUrl = null; }
+        }
+        function speakReply(text) {
+          if (!voiceOn || !authToken || !text) return;
+          fetch(API_BASE + '/speak', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
+            body: JSON.stringify({ text: text })
+          }).then(function (res) {
+            if (res.status === 401 && authToken) { clearAuth(); return null; }
+            if (!res.ok) return null;
+            return res.blob();
+          }).then(function (blob) {
+            if (!blob) return;
+            if (!voiceAudio) { try { voiceAudio = new Audio(); } catch (e) { return; } }
+            stopVoice();
+            voiceUrl = URL.createObjectURL(blob);
+            voiceAudio.src = voiceUrl;
+            var p = voiceAudio.play();
+            if (p && p.catch) p.catch(function () {});
+          }, function () {});
+        }
+        var setVoiceRow = document.getElementById('set-voice');
+        function syncVoiceRow() {
+          if (!setVoiceRow) return;
+          setVoiceRow.querySelector('.set-state').textContent = voiceOn ? 'On' : 'Off';
+          setVoiceRow.setAttribute('aria-pressed', voiceOn ? 'true' : 'false');
+        }
+        if (setVoiceRow) {
+          setVoiceRow.addEventListener('click', function () {
+            voiceOn = !voiceOn;
+            try { localStorage.setItem(VOICE_KEY, voiceOn ? '1' : '0'); } catch (e) {}
+            if (!voiceOn) stopVoice();
+            syncVoiceRow();
+          });
+          syncVoiceRow();
+        }
+
         /* save sync: saveState() already lands every room change
            in the local record; while logged in, the same record
            goes up to /save too — debounced, so a burst of dragging
@@ -2894,6 +2955,7 @@
             if (r.status === 401) { deliverDemoMessage(text); return; }
             if (r.status === 200 && r.data && r.data.reply) {
               showLine(r.data.reply);
+              speakReply(r.data.reply);
             } else if (r.status === 402 && r.data && r.data.code === 'trial_exhausted') {
               /* the trial is used up: she says so herself and stays
                  put — no falling back to the scripted demo replies
