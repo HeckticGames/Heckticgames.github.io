@@ -4111,6 +4111,7 @@
             candleFlame.position.y = 0.71;
             candleGroup.add(candleFlame);
             candleHalo = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTexture(), color: 0xffa845, transparent: true, opacity: 0.3, blending: THREE.AdditiveBlending, depthWrite: false }));
+            candleHalo.raycast = function () {};
             candleHalo.scale.set(0.6, 0.6, 1);
             candleHalo.position.y = 0.71;
             candleGroup.add(candleHalo);
@@ -4368,7 +4369,7 @@
               -((cy - rect.top) / rect.height) * 2 + 1
             );
             raycaster.setFromCamera(nd, camera);
-            var hits = raycaster.intersectObjects([ghostGroup, floor, rugGroup, lightsGroup, chairGroup, shelfGroup, pumpkinGroup, backWall, leftWall, rightWall], true);
+            var hits = raycaster.intersectObjects([ghostGroup, floor, rugGroup, lightsGroup, chairGroup, shelfGroup, pumpkinGroup, candleGroup, stoolGroup, backWall, leftWall, rightWall], true);
             for (var i = 0; i < hits.length; i++) {
               var o = hits[i].object;
               if (o.userData.isGhost) return { kind: 'ghost' };
