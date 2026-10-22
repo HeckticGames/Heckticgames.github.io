@@ -1457,8 +1457,16 @@
            cleanly: the room reports the grab through its
            onApproachCancel callback, which lands here. A typed
            message while she is NOT close changes nothing: no move,
-           no timer, the reply is the usual few seconds in the pill. */
+           no timer; the reply holds in the pill for thirty seconds
+           either way (see REPLY_HOLD_MS below). */
         var LINGER_MS = 15000;
+        /* Her replies to a message — typed or spoken — hold in the
+           pill for a full thirty seconds before fading: answers,
+           especially the long ones from the full-size brain, were
+           gone before they could be read. The fifteen-second linger
+           above still governs how long she stays close; only the
+           words' hold is longer. */
+        var REPLY_HOLD_MS = 30000;
         var convActive = false;
         var convTimer = null;
         var convListenTimer = null;
@@ -2489,11 +2497,11 @@
           setTimeout(function () {
             express('happy', 2.6);
             if (inConv && convActive) {
-              say(r.line, LINGER_MS);
+              say(r.line, REPLY_HOLD_MS);
               scheduleLinger();
               scheduleFollowUpListening(450);
             } else {
-              say(r.line, 5200);
+              say(r.line, REPLY_HOLD_MS);
             }
           }, 700);
         }
@@ -2705,11 +2713,11 @@
           function showLine(line) {
             express('happy', 2.6);
             if (inConv && convActive) {
-              say(line, LINGER_MS);
+              say(line, REPLY_HOLD_MS);
               scheduleLinger();
               scheduleFollowUpListening(450);
             } else {
-              say(line, 5200);
+              say(line, REPLY_HOLD_MS);
             }
           }
           apiFetch('/chat', { method: 'POST', body: JSON.stringify({ message: text }) }).then(function (r) {
