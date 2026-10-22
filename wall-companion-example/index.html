@@ -1045,11 +1045,11 @@
             <div class="plus-head">Relic Plus</div>
             <ul class="plus-points">
               <li>Relic is yours. Plus just pays for the cloud brain and voice she uses when she thinks and speaks.</li>
-              <li>Voice replies, and 300 smart replies a month.</li>
+              <li>Voice replies and 300 replies a month.</li>
               <li>$10 a month, and you can turn it off anytime. Cancel and she stays yours — your room and everything in it stay too.</li>
             </ul>
             <button class="plus-action" id="btn-plus-toggle">Turn on Plus</button>
-            <p class="plus-fine">This test version isn't linked to payment — turning Plus on here doesn't charge anything.</p>
+            <p class="plus-fine">Relic Plus is a real subscription, paid through Stripe. Log in first — Plus rides on your account.</p>
           </div>
           <div class="checkout-pop" id="checkout-pop" role="group" aria-label="Test checkout" hidden>
             <div class="checkout-head">
@@ -2054,10 +2054,14 @@
 
         /* The teal Plus button beside Shop — the membership door.
            It opens a small panel in the shop listing's family that
-           explains the plan in plain lines. Turning Plus ON goes
-           through the test checkout sheet below; turning it OFF is
-           instant, with no checkout, and never touches owned
-           items. */
+           explains the plan in plain lines. Turning Plus ON is a
+           real Stripe subscription now: the account section's
+           startPlusCheckout() sends the browser to Stripe's hosted
+           payment page, and Stripe tells the server, which is what
+           actually turns Plus on (billingSource === 'stripe'). A
+           member's button opens Stripe's manage page instead
+           (cancel, new card). The old instant off-switch remains
+           only for pre-Stripe demo/manual Plus. */
         var plusBtn = document.getElementById('btn-plus');
         var plusToggle = document.getElementById('btn-plus-toggle');
         var plusBadge = document.getElementById('plus-badge');
@@ -2069,7 +2073,9 @@
           plusBtn.classList.toggle('on', plusOn);
           plusBtn.setAttribute('aria-pressed', plusOn ? 'true' : 'false');
           plusBadge.hidden = !plusOn;
-          plusToggle.textContent = plusOn ? 'Turn off Plus' : 'Turn on Plus';
+          plusToggle.textContent = !plusOn ? 'Turn on Plus'
+            : (typeof billingSource !== 'undefined' && billingSource === 'stripe') ? 'Manage Plus'
+            : 'Turn off Plus';
           plusToggle.classList.toggle('is-on', plusOn);
         }
         plusBtn.addEventListener('click', function (ev) {
@@ -2081,26 +2087,31 @@
         plusPop.addEventListener('click', function (ev) { ev.stopPropagation(); });
         plusToggle.addEventListener('click', function () {
           if (plusOn) {
+            if (typeof billingSource !== 'undefined' && billingSource === 'stripe' && authToken) {
+              openBillingPortal();
+              return;
+            }
             plusOn = false;
             applyPlusUI();
             saveState();
             sndRemove();
             say("Plus is off. Same me, just the scripted kind — the room's still all yours.", 4200);
           } else {
-            openCheckout(true);
+            startPlusCheckout();
           }
         });
 
         /* ============ Test checkout sheet ============
-           One sheet serves both doors: Checkout from the shop's
-           cart row, and "Turn on Plus" from the Plus panel. It is
-           labeled TEST MODE at the top, states plainly that no
-           real money moves, lists Relic Plus at $10/mo when Plus
-           is being turned on plus every cart item at $0.99, shows
-           a pre-filled test card, and its Pay (test) button runs a
-           brief processing beat before the success state: cart
-           items become owned and land in the room, and Plus flips
-           on with the usual bright-teal state and pill line. */
+           The shop cart's sheet. It is labeled TEST MODE at the
+           top, states plainly that no real money moves, lists
+           every cart item at $0.99, shows a pre-filled test card,
+           and its Pay (test) button runs a brief processing beat
+           before the success state: cart items become owned and
+           land in the room. Relic Plus used to ride through here
+           too; it doesn't anymore — Plus is a real Stripe
+           subscription now (see startPlusCheckout in the account
+           section). The room items stay test until their own
+           Stripe products are wired the same way. */
         var checkoutLines = document.getElementById('checkout-lines');
         var checkoutTotalEl = document.getElementById('checkout-total');
         var checkoutFormView = document.getElementById('checkout-form-view');
@@ -2533,6 +2544,12 @@
         var AUTH_KEY = 'relic_auth';
         var authToken = null;
         var authEmail = null;
+        /* where this account's Plus comes from, per the server:
+           'stripe' (a real subscription — the server's word is
+           final), 'manual' (the pre-Stripe save-blob flag), or
+           null (no word yet / no Plus). Filled by
+           refreshBillingStatus(). */
+        var billingSource = null;
         try {
           var savedAuth = JSON.parse(localStorage.getItem(AUTH_KEY) || 'null');
           if (savedAuth && savedAuth.token) {
@@ -2679,6 +2696,7 @@
               acctPassInput.value = '';
               setAcctOpen(false);
               syncFromServer();
+              refreshBillingStatus();
               say('Logged in — Relic now saves the room to this account, and the smart brain answers here.', 5600);
             } else {
               showAcctError((r.data && r.data.error) || 'Something went wrong — try again.');
@@ -2752,8 +2770,115 @@
             showLine("Relic couldn't reach the smart brain just now — try again in a moment.");
           });
         }
+        /* ============ Relic Plus billing (real, via Stripe) ============
+           Turning Plus on: the server builds a Stripe Checkout
+           session and hands back its URL; the browser goes there,
+           Stripe takes the card, and Stripe's webhook tells the
+           server — the server, not this page, is what turns Plus
+           on. Managing or cancelling: Stripe's own billing portal,
+           same round trip. refreshBillingStatus() keeps what this
+           page shows in step with the server's word. */
+        function refreshBillingStatus() {
+          if (!authToken) return;
+          apiFetch('/billing/status').then(function (r) {
+            if (r.status !== 200 || !r.data) return;
+            billingSource = r.data.source || null;
+            if (billingSource === 'stripe') {
+              var truth = !!r.data.plus;
+              if (truth !== plusOn) {
+                plusOn = truth;
+                saveState();
+              }
+              applyPlusUI();
+            } else if (r.data.plus && !plusOn) {
+              plusOn = true;
+              applyPlusUI();
+              saveState();
+            } else {
+              applyPlusUI();
+            }
+          }, function () {});
+        }
+        function startPlusCheckout() {
+          if (!authToken) {
+            if (!plusPop.hidden) setPlusOpen(false);
+            setAcctOpen(true);
+            say("Plus rides on your account — log in or create one first, then Stripe takes the payment.", 5600);
+            return;
+          }
+          plusToggle.disabled = true;
+          apiFetch('/billing/checkout', { method: 'POST' }).then(function (r) {
+            plusToggle.disabled = false;
+            if (r.status === 200 && r.data && r.data.url) {
+              window.location.href = r.data.url;
+              return;
+            }
+            if (r.data && r.data.code === 'already_plus') {
+              refreshBillingStatus();
+              say("Relic Plus is already on for this account.", 4600);
+              return;
+            }
+            if (r.status === 503) {
+              say("Plus payments aren't switched on yet — check back soon.", 4600);
+              return;
+            }
+            say("Payments didn't answer just now — try again in a moment.", 4600);
+          }, function () {
+            plusToggle.disabled = false;
+            say("Couldn't reach the server — check the connection and try again.", 4600);
+          });
+        }
+        function openBillingPortal() {
+          plusToggle.disabled = true;
+          apiFetch('/billing/portal', { method: 'POST' }).then(function (r) {
+            plusToggle.disabled = false;
+            if (r.status === 200 && r.data && r.data.url) {
+              window.location.href = r.data.url;
+              return;
+            }
+            say("The manage page didn't answer just now — try again in a moment.", 4600);
+          }, function () {
+            plusToggle.disabled = false;
+            say("Couldn't reach the server — check the connection and try again.", 4600);
+          });
+        }
+        /* Back from Stripe: the hub URL carries ?plus=success or
+           ?plus=cancel. On success the webhook can land a beat
+           after the browser does, so her status gets polled a few
+           times before she says the word. Either way the marker
+           is scrubbed from the address bar so a refresh doesn't
+           replay it. */
+        (function () {
+          var marker = null;
+          try {
+            marker = new URLSearchParams(window.location.search).get('plus');
+          } catch (e) {}
+          if (!marker) return;
+          try {
+            window.history.replaceState(null, '', window.location.pathname);
+          } catch (e) {}
+          setTimeout(function () {
+            if (marker === 'cancel') {
+              say("No charge — Relic Plus stays off. It's there whenever you want it.", 5200);
+              return;
+            }
+            if (marker !== 'success') return;
+            say("Welcome back — confirming your Relic Plus payment with Stripe…", 4200);
+            var tries = 0;
+            var poll = setInterval(function () {
+              tries++;
+              refreshBillingStatus();
+              if (plusOn || tries >= 5) {
+                clearInterval(poll);
+                if (plusOn) {
+                  say("Relic Plus is on. Voice replies and 300 replies a month — she's all yours.", 5600);
+                }
+              }
+            }, 1600);
+          }, 1500);
+        })();
         updateAuthUI();
-        if (authToken) syncFromServer();
+        if (authToken) { syncFromServer(); refreshBillingStatus(); }
 
         /* ================================================================
            The 3D room — Three.js. Blank room, one ghost, buyable things.
