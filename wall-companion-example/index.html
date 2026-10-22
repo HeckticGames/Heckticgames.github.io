@@ -456,10 +456,10 @@
       .cart-checkout:hover { background: var(--purple-deep); transform: translateY(-1px); }
       .cart-checkout:active { transform: translateY(0) scale(0.97); }
 
-      /* Checkout sheet — the test paywall. Same card family as the
-         shop listing and the Plus panel; the TEST MODE badge and
-         the no-real-money line sit at the top where they can't be
-         missed. Purple stays the money color throughout. */
+      /* Checkout sheet — the shop's real payment summary. Same
+         card family as the shop listing and the Plus panel; the
+         total sits in the open and Pay hands off to Stripe.
+         Purple stays the money color throughout. */
       .checkout-pop {
         width: 100%; max-width: 680px;
         background: var(--card);
@@ -1080,34 +1080,17 @@
             <button class="plus-action" id="btn-plus-toggle">Turn on Plus</button>
             <p class="plus-fine">Relic Plus is a real subscription, paid through Stripe. Log in first — Plus rides on your account.</p>
           </div>
-          <div class="checkout-pop" id="checkout-pop" role="group" aria-label="Test checkout" hidden>
+          <div class="checkout-pop" id="checkout-pop" role="group" aria-label="Checkout" hidden>
             <div class="checkout-head">
               <span class="checkout-title">Checkout</span>
-              <span class="test-badge">TEST MODE</span>
             </div>
-            <p class="checkout-testline">This is a test checkout — no real money moves.</p>
+            <p class="checkout-testline">You pay on Stripe's secure page — your pieces are yours the moment it clears.</p>
             <div id="checkout-form-view">
               <ul class="checkout-lines" id="checkout-lines"></ul>
               <div class="checkout-total-row"><span>Total</span><span id="checkout-total">$0.00</span></div>
-              <div class="checkout-card">
-                <label class="checkout-field"><span>Card number</span><input id="cc-num" value="4242 4242 4242 4242" readonly aria-label="Test card number" /></label>
-                <div class="checkout-card-row">
-                  <label class="checkout-field"><span>Expiry</span><input id="cc-exp" value="12 / 34" readonly aria-label="Test card expiry" /></label>
-                  <label class="checkout-field"><span>CVC</span><input id="cc-cvc" value="424" readonly aria-label="Test card CVC" /></label>
-                </div>
-                <p class="checkout-card-note">Test card — pre-filled, never charged.</p>
-              </div>
               <div class="checkout-actions">
-                <button class="checkout-pay" id="btn-pay">Pay (test)</button>
+                <button class="checkout-pay" id="btn-pay">Pay</button>
                 <button class="checkout-cancel" id="btn-checkout-cancel">Cancel</button>
-              </div>
-            </div>
-            <div id="checkout-done-view" hidden>
-              <p class="checkout-done-title">Test payment complete.</p>
-              <p class="checkout-done-text" id="checkout-done-text"></p>
-              <p class="checkout-testline">No real money moved.</p>
-              <div class="checkout-actions">
-                <button class="checkout-pay" id="btn-checkout-done">Done</button>
               </div>
             </div>
           </div>
@@ -2211,22 +2194,19 @@
           }
         });
 
-        /* ============ Test checkout sheet ============
-           The shop cart's sheet. It is labeled TEST MODE at the
-           top, states plainly that no real money moves, lists
-           every cart item at $0.99, shows a pre-filled test card,
-           and its Pay (test) button runs a brief processing beat
-           before the success state: cart items become owned and
-           land in the room. Relic Plus used to ride through here
-           too; it doesn't anymore — Plus is a real Stripe
-           subscription now (see startPlusCheckout in the account
-           section). The room items stay test until their own
-           Stripe products are wired the same way. */
+        /* ============ Checkout sheet ============
+           The shop cart's sheet: it lists the cart and its total,
+           and its Pay button hands the whole cart to Stripe
+           (POST /billing/item-checkout) and leaves for Stripe's
+           hosted page. Ownership lands when Stripe's webhook
+           tells the server the payment cleared — the server's
+           purchases table is the truth, and /billing/status
+           unions it into the room (see refreshBillingStatus).
+           Plus never rides through here — it's a subscription
+           with its own checkout (startPlusCheckout). */
         var checkoutLines = document.getElementById('checkout-lines');
         var checkoutTotalEl = document.getElementById('checkout-total');
         var checkoutFormView = document.getElementById('checkout-form-view');
-        var checkoutDoneView = document.getElementById('checkout-done-view');
-        var checkoutDoneText = document.getElementById('checkout-done-text');
         var payBtn = document.getElementById('btn-pay');
         var checkoutPlus = false;
         var paying = false;
@@ -2239,10 +2219,8 @@
           }
         }
         function resetCheckoutView() {
-          checkoutFormView.hidden = false;
-          checkoutDoneView.hidden = true;
           payBtn.disabled = false;
-          payBtn.textContent = 'Pay (test)';
+          payBtn.textContent = 'Pay';
         }
         function checkoutTotal() {
           return (checkoutPlus ? PLUS_PRICE : 0) + cartTotalValue();
@@ -2287,7 +2265,7 @@
           });
           checkoutTotalEl.textContent = money(checkoutTotal());
           resetCheckoutView();
-          payBtn.textContent = 'Pay ' + money(checkoutTotal()) + ' (test)';
+          payBtn.textContent = 'Pay ' + money(checkoutTotal());
           closeAllTrays();
           hideRotbar();
           if (!settingsPop.hidden) setSettingsOpen(false);
@@ -2299,53 +2277,43 @@
         document.getElementById('btn-checkout-cancel').addEventListener('click', function () {
           setCheckoutOpen(false);
         });
-        document.getElementById('btn-checkout-done').addEventListener('click', function () {
-          setCheckoutOpen(false);
-        });
         payBtn.addEventListener('click', function () {
           if (paying) return;
+          if (checkoutPlus) { setCheckoutOpen(false); startPlusCheckout(); return; }
+          var ids = cartIds().filter(function (id) { return itemPrice(id) > 0 && !ownedItems[id]; });
+          if (!ids.length) { setCheckoutOpen(false); return; }
+          if (!authToken) {
+            setCheckoutOpen(false);
+            setAcctOpen(true);
+            say("Log in first — your pieces ride on your account.", 4800);
+            return;
+          }
           paying = true;
           payBtn.disabled = true;
-          payBtn.textContent = 'Processing…';
-          var boughtIds = cartIds();
-          var gotPlus = checkoutPlus;
-          setTimeout(function () {
+          payBtn.textContent = 'Taking you to checkout…';
+          function payFailed(msg) {
             paying = false;
-            if (gotPlus) {
-              plusOn = true;
-              applyPlusUI();
+            payBtn.disabled = false;
+            payBtn.textContent = 'Pay ' + money(checkoutTotal());
+            say(msg, 4200);
+          }
+          apiFetch('/billing/item-checkout', { method: 'POST', body: JSON.stringify({ items: ids }) }).then(function (r) {
+            if (r.status === 200 && r.data && r.data.url) {
+              window.location.href = r.data.url;
+              return;
             }
-            boughtIds.forEach(function (id) {
-              ownedItems[id] = true;
-              placedItems[id] = true;
-              delete cartItems[id];
-              if (room3d) room3d.setItem(id, true);
-              renderShopItem(id);
-            });
-            renderCartRow();
-            saveState();
-            sndBuy();
-            express('surprised', 1);
-            var bits = [];
-            if (gotPlus) bits.push('Relic Plus is on.');
-            if (boughtIds.length) {
-              bits.push(boughtIds.map(function (id) { return ITEM_DEFS[id].name; }).join(', ') + (boughtIds.length === 1 ? ' is' : ' are') + ' in the room.');
+            if (r.data && r.data.code === 'already_owned') {
+              setCheckoutOpen(false);
+              refreshBillingStatus();
+              say("You already own those.", 3600);
+              paying = false;
+              return;
             }
-            checkoutDoneText.textContent = bits.join(' ');
-            checkoutFormView.hidden = true;
-            checkoutDoneView.hidden = false;
-            if (gotPlus) {
-              say("Plus is on. Brain upgraded — ask me anything.", 4200);
-              if (boughtIds.length) {
-                setTimeout(function () { say("Done — the new pieces are in the room.", 3200); }, 4400);
-              }
-            } else if (boughtIds.length) {
-              say("Done — the new pieces are in the room.", 3400);
-            }
-            if (boughtIds.length) {
-              setTimeout(function () { if (room3d) room3d.visit(boughtIds[0]); }, 600);
-            }
-          }, 900);
+            if (r.status === 503) { payFailed("The shop isn't wired to payments yet."); return; }
+            payFailed("Payments didn't answer — try again in a moment.");
+          }, function () {
+            payFailed("Payments didn't answer — try again in a moment.");
+          });
         });
 
         /* Restore — Plus state, owned items, room placement, and
@@ -3134,6 +3102,25 @@
             } else {
               applyPlusUI();
             }
+            /* Shop pieces are server truth too (v9): whatever
+               the purchases table says this account owns joins
+               the room here — a bought piece follows the account
+               to any device, and a finished checkout lands the
+               moment its webhook does. */
+            if (r.data.owned && r.data.owned.length) {
+              var gainedShop = false;
+              r.data.owned.forEach(function (id) {
+                if (ITEM_DEFS[id] && !ownedItems[id]) {
+                  ownedItems[id] = true;
+                  placedItems[id] = true;
+                  delete cartItems[id];
+                  if (room3d) room3d.setItem(id, true);
+                  renderShopItem(id);
+                  gainedShop = true;
+                }
+              });
+              if (gainedShop) { renderCartRow(); saveState(); }
+            }
           }, function () {});
         }
         function startPlusCheckout() {
@@ -3209,6 +3196,43 @@
                 clearInterval(poll);
                 if (plusOn) {
                   say("Relic Plus is on. She's all yours.", 4800);
+                }
+              }
+            }, 1600);
+          }, 1500);
+        })();
+        /* Back from a shop checkout: ?shop=success or ?shop=cancel.
+           Same shape as the Plus return above — poll her status a
+           few times (the webhook can land a beat after the browser
+           does); when a new piece shows up as owned it's already
+           in the room, placed by the status merge. */
+        (function () {
+          var marker = null;
+          try {
+            marker = new URLSearchParams(window.location.search).get('shop');
+          } catch (e) {}
+          if (!marker) return;
+          try {
+            window.history.replaceState(null, '', window.location.pathname);
+          } catch (e) {}
+          setTimeout(function () {
+            if (marker === 'cancel') {
+              say("No charge — your cart's still here.", 4000);
+              return;
+            }
+            if (marker !== 'success') return;
+            var before = Object.keys(ownedItems).length;
+            say("Welcome back — checking your payment…", 3600);
+            var tries = 0;
+            var poll = setInterval(function () {
+              tries++;
+              refreshBillingStatus();
+              if (Object.keys(ownedItems).length > before || tries >= 5) {
+                clearInterval(poll);
+                if (Object.keys(ownedItems).length > before) {
+                  sndBuy();
+                  express('surprised', 1);
+                  say("Done — the new pieces are in the room.", 4200);
                 }
               }
             }, 1600);
