@@ -1363,15 +1363,12 @@
               if (id === 'chair') showTray(trayChair);
               if (id === 'shelf') showTray(trayShelf);
               if (id === 'chair' || id === 'shelf') { showRotbar(id); } else { hideRotbar(); }
-              /* no visit on a tap: she stays where she is so she is
-                 never in the way while the user is moving or adjusting
-                 the piece. She still visits on her own wander, after a
-                 purchase, and after a fabric/finish pick. */
+              if (room3d) room3d.visit(id);
               /* opening a customization tray is silent: she only
                  speaks about the chair or the shelf AFTER a fabric
                  or finish is actually picked (see sayCustomize).
-                 Items with no tray (lights, pumpkin) still get a
-                 spoken line, said from wherever she happens to be. */
+                 Items with no tray (lights, pumpkin) keep their
+                 visit line — no choosing is happening there. */
               if (id !== 'chair' && id !== 'shelf') {
                 say(visitLines[id] || "That's mine. I love it here.", 3200);
               }
