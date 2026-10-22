@@ -188,12 +188,14 @@
       @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.45); } }
 
       /* Speech line — their words appear as one still line of text
-         in a small pill floating at the bottom-center of the screen,
-         and update when they speak. Kept deliberately tiny: a few
-         words of caption, not a banner across the room. The color
-         trays live at the top of the screen now, so the bottom is
-         hers again; the side clearance keeps the pill off the Hey
-         button at the bottom-left. */
+         in a pill floating at the bottom-center of the screen,
+         and update when they speak. A few words of caption, not a
+         banner across the room — but readable words: Evan asked
+         for the text a tad bigger (10.5px -> 13px) and for her
+         lines shorter, so the pill stays small by saying less.
+         The color trays live at the top of the screen now, so the
+         bottom is hers again; the side clearance keeps the pill
+         off the Hey button at the bottom-left. */
       .marquee {
         position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%);
         z-index: 6;
@@ -202,10 +204,10 @@
         border: 1px solid rgba(255, 255, 255, 0.14);
         border-radius: 999px;
         color: #eafaf5;
-        font-weight: 700; font-size: 10.5px;
+        font-weight: 700; font-size: 13px;
         line-height: 1.35;
         text-align: center;
-        padding: 3px 12px;
+        padding: 5px 15px;
         opacity: 0; pointer-events: none;
         transition: opacity 0.35s ease;
       }
@@ -655,7 +657,7 @@
       @keyframes hexpulse { 0%, 100% { transform: scale(1); opacity: 0.85; } 50% { transform: scale(1.09); opacity: 1; } }
       .boot .boot-name {
         color: #eafaf5; font-family: "Baloo 2", sans-serif; font-weight: 700;
-        letter-spacing: 0.55em; text-indent: 0.55em; font-size: clamp(15px, 3.1vw, 20px);
+        letter-spacing: 0.55em; text-indent: 0.55em; font-size: clamp(19px, 3.9vw, 26px);
       }
       .boot .boot-dots { display: flex; gap: 7px; }
       .boot .boot-dots span { width: 7px; height: 7px; border-radius: 50%; background: var(--teal-bright); animation: dotfade 1.2s ease-in-out infinite; }
@@ -1567,13 +1569,13 @@
         }
         function startListening(followUp) {
           if (!SpeechRec) {
-            if (!followUp) say("My ears don't work on this device — but you can type to me in the box below.", 5600);
+            if (!followUp) say("My ears don't work here — type to me below.", 5600);
             return false;
           }
           if (voiceActive) return true;
           var rec;
           try { rec = new SpeechRec(); } catch (e) {
-            if (!followUp) say("My ears don't work on this device — but you can type to me in the box below.", 5600);
+            if (!followUp) say("My ears don't work here — type to me below.", 5600);
             return false;
           }
           rec.lang = 'en-US';
@@ -1600,14 +1602,14 @@
             if (err === 'not-allowed' || err === 'service-not-allowed' || err === 'audio-capture') {
               spokeFallback = true;
               micBlocked = true;
-              say("I couldn't hear you — the microphone's off for me. Type to me in the box below instead.", 5600);
+              say("Couldn't hear you — the mic's off. Type below.", 5600);
             } else if (err === 'no-speech') {
               spokeFallback = true;
               /* a follow-up session that hears nothing stays quiet
                  about it — the linger timer ends the conversation,
                  not a loop of apologies. The first Hey press keeps
                  its spoken fallback (here, and in onend's twin). */
-              if (!followUp && lastExchangeAt === sessionExchange) say("I didn't catch anything that time. Press Hey and try again — or type to me below.", 5600);
+              if (!followUp && lastExchangeAt === sessionExchange) say("Didn't catch that. Hey again, or type below.", 5600);
             } else if (err === 'aborted') {
               spokeFallback = true; /* stopped on purpose; nothing to explain */
             }
@@ -1617,7 +1619,7 @@
             if (currentRec === rec) currentRec = null;
             micRefresh();
             if (!heard && !spokeFallback && !followUp && lastExchangeAt === sessionExchange) {
-              say("I didn't catch anything that time. Press Hey and try again — or type to me below.", 5600);
+              say("Didn't catch that. Hey again, or type below.", 5600);
             }
             /* back-and-forth: while a conversation is holding her
                close and this session heard nothing, quietly open
@@ -2102,7 +2104,7 @@
             applyPlusUI();
             saveState();
             sndRemove();
-            say("Plus is off. Same me, just the scripted kind — the room's still all yours.", 4200);
+            say("Plus is off. The room's still yours.", 4200);
           } else {
             startPlusCheckout();
           }
@@ -2215,10 +2217,10 @@
             if (gotPlus) {
               say("Plus is on. Brain upgraded — ask me anything.", 4200);
               if (boughtIds.length) {
-                setTimeout(function () { say("Test purchase done — the new pieces are in the room.", 3400); }, 4400);
+                setTimeout(function () { say("Done — the new pieces are in the room.", 3200); }, 4400);
               }
             } else if (boughtIds.length) {
-              say("Test purchase done — the new pieces are in the room.", 3600);
+              say("Done — the new pieces are in the room.", 3400);
             }
             if (boughtIds.length) {
               setTimeout(function () { if (room3d) room3d.visit(boughtIds[0]); }, 600);
@@ -2766,7 +2768,7 @@
               setAcctOpen(false);
               syncFromServer();
               refreshBillingStatus();
-              say('Logged in — Relic now saves the room to this account, and the smart brain answers here.', 5600);
+              say('Logged in. Your room saves to this account now.', 4800);
             } else {
               showAcctError((r.data && r.data.error) || 'Something went wrong — try again.');
             }
@@ -2779,7 +2781,7 @@
         acctLogout.addEventListener('click', function () {
           clearAuth();
           setAcctOpen(false);
-          say('Logged out. Relic is back to the demo brain on this device.', 4600);
+          say('Logged out.', 3000);
         });
         /* the real brain: when logged in, typed words and final
            Hey transcripts alike land here instead of the demo
@@ -2820,23 +2822,23 @@
               if (!shopPop.hidden) setShopOpen(false);
               if (!checkoutPop.hidden) setCheckoutOpen(false);
               setPlusOpen(true);
-              showLine("My smart chats are used up for the trial. I'm still here with you. Plus turns my smart chat and voice back on.");
+              showLine("My trial chats are used up. Plus brings them back.");
             } else if (r.status === 403) {
               if (!shopPop.hidden) setShopOpen(false);
               if (!checkoutPop.hidden) setCheckoutOpen(false);
               setPlusOpen(true);
-              showLine("Relic's smart brain is in private beta for now — the Plus panel below has the details.");
+              showLine("My smart brain is in private beta for now.");
             } else if (r.status === 429 && r.data && r.data.code === 'plus_monthly_cap') {
-              showLine("That's all 300 of this month's Plus smart replies used up — they come back next month.");
+              showLine("That's this month's 300 replies used up.");
             } else if (r.status === 429) {
-              showLine("That's Relic's chat limit for now — more talking soon.");
+              showLine("That's my chat limit for now.");
             } else if (r.status === 503) {
-              showLine("Relic's smart brain isn't connected yet — check back soon.");
+              showLine("My smart brain isn't connected yet.");
             } else {
-              showLine("Relic couldn't reach the smart brain just now — try again in a moment.");
+              showLine("Can't reach my brain — try again.");
             }
           }, function () {
-            showLine("Relic couldn't reach the smart brain just now — try again in a moment.");
+            showLine("Can't reach my brain — try again.");
           });
         }
         /* ============ Relic Plus billing (real, via Stripe) ============
@@ -2872,7 +2874,7 @@
           if (!authToken) {
             if (!plusPop.hidden) setPlusOpen(false);
             setAcctOpen(true);
-            say("Plus rides on your account — log in or create one first, then Stripe takes the payment.", 5600);
+            say("Log in first — Plus rides on your account.", 4800);
             return;
           }
           plusToggle.disabled = true;
@@ -2884,17 +2886,17 @@
             }
             if (r.data && r.data.code === 'already_plus') {
               refreshBillingStatus();
-              say("Relic Plus is already on for this account.", 4600);
+              say("Plus is already on.", 3600);
               return;
             }
             if (r.status === 503) {
-              say("Plus payments aren't switched on yet — check back soon.", 4600);
+              say("Payments aren't on yet.", 3600);
               return;
             }
-            say("Payments didn't answer just now — try again in a moment.", 4600);
+            say("Payments hiccuped — try again.", 3600);
           }, function () {
             plusToggle.disabled = false;
-            say("Couldn't reach the server — check the connection and try again.", 4600);
+            say("Can't reach the server — try again.", 3600);
           });
         }
         function openBillingPortal() {
@@ -2905,10 +2907,10 @@
               window.location.href = r.data.url;
               return;
             }
-            say("The manage page didn't answer just now — try again in a moment.", 4600);
+            say("Manage page hiccuped — try again.", 3600);
           }, function () {
             plusToggle.disabled = false;
-            say("Couldn't reach the server — check the connection and try again.", 4600);
+            say("Can't reach the server — try again.", 3600);
           });
         }
         /* Back from Stripe: the hub URL carries ?plus=success or
@@ -2928,11 +2930,11 @@
           } catch (e) {}
           setTimeout(function () {
             if (marker === 'cancel') {
-              say("No charge — Relic Plus stays off. It's there whenever you want it.", 5200);
+              say("No charge. Plus stays off.", 4000);
               return;
             }
             if (marker !== 'success') return;
-            say("Welcome back — confirming your Relic Plus payment with Stripe…", 4200);
+            say("Welcome back — checking your payment…", 3600);
             var tries = 0;
             var poll = setInterval(function () {
               tries++;
@@ -2940,7 +2942,7 @@
               if (plusOn || tries >= 5) {
                 clearInterval(poll);
                 if (plusOn) {
-                  say("Relic Plus is on. Voice replies and 300 replies a month — she's all yours.", 5600);
+                  say("Relic Plus is on. She's all yours.", 4800);
                 }
               }
             }, 1600);
@@ -3574,7 +3576,7 @@
           var gtx = ghostCanvas.getContext('2d');
           var ghostTex = new THREE.CanvasTexture(ghostCanvas);
           ghostTex.encoding = THREE.sRGBEncoding;
-          var drawState = { sy: 1, s: 1, blink: 1, happy: false, glance: 0, pulse: 1, sick: 0, sickSpin: 0, reading: false };
+          var drawState = { sy: 1, s: 1, blink: 1, happy: false, glance: 0, pulse: 1, sick: 0, sickSpin: 0 };
           var spinRot = 0, wiggleRot = 0;
 
           function rgbOf(hex) { var n = parseInt(hex.slice(1), 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; }
@@ -3726,74 +3728,6 @@
             }
             g.closePath();
             g.fillStyle = mixHex(c1, '#ffffff', 0.5); g.fill();
-            /* reading props: while the chair act runs she wears
-               glasses and holds an open book. Both ride on
-               drawState.reading, which the animate loop derives
-               fresh each frame from the act state, so they vanish
-               the moment the act ends. The glasses sit on the same
-               eye centers the face uses (cx ± ex, shifted by the
-               same glance offset gx), so they stay on her eyes
-               through blinks, glances, and expressions. */
-            if (drawState.reading) {
-              g.save();
-              g.strokeStyle = 'rgba(23,48,43,0.88)';
-              g.lineWidth = 6;
-              [-1, 1].forEach(function (s) {
-                g.beginPath();
-                g.ellipse(cx + s * ex + gx, ey, 37, 41, 0, 0, Math.PI * 2);
-                g.stroke();
-                /* a short temple arm out toward the sheet's edge */
-                g.beginPath();
-                g.moveTo(cx + s * (ex + 36) + gx, ey - 5);
-                g.lineTo(cx + s * 124 + gx, ey - 15);
-                g.stroke();
-              });
-              /* the bridge, bowing up between the frames */
-              g.beginPath();
-              g.moveTo(cx - (ex - 37) + gx, ey - 3);
-              g.quadraticCurveTo(cx + gx, ey - 16, cx + (ex - 37) + gx, ey - 3);
-              g.stroke();
-              g.restore();
-              /* the open book: a darker cover peeking out around
-                 two pale pages in a gentle V, held low in front of
-                 her, its top edge tucking just under the hex heart */
-              var bkTop = 402, bkBot = 450;
-              g.save();
-              g.beginPath();
-              g.moveTo(cx, bkTop + 4);
-              g.quadraticCurveTo(cx - 48, bkTop - 4, cx - 96, bkTop + 2);
-              g.lineTo(cx - 96, bkBot);
-              g.quadraticCurveTo(cx - 48, bkBot - 6, cx, bkBot + 4);
-              g.quadraticCurveTo(cx + 48, bkBot - 6, cx + 96, bkBot);
-              g.lineTo(cx + 96, bkTop + 2);
-              g.quadraticCurveTo(cx + 48, bkTop - 4, cx, bkTop + 4);
-              g.closePath();
-              g.fillStyle = mixHex(c2, '#0d3a33', 0.5); g.fill();
-              g.beginPath();
-              g.moveTo(cx, bkTop + 9);
-              g.quadraticCurveTo(cx - 45, bkTop + 2, cx - 89, bkTop + 8);
-              g.lineTo(cx - 89, bkBot - 6);
-              g.quadraticCurveTo(cx - 45, bkBot - 11, cx, bkBot - 1);
-              g.quadraticCurveTo(cx + 45, bkBot - 11, cx + 89, bkBot - 6);
-              g.lineTo(cx + 89, bkTop + 8);
-              g.quadraticCurveTo(cx + 45, bkTop + 2, cx, bkTop + 9);
-              g.closePath();
-              g.fillStyle = mixHex(c1, '#ffffff', 0.86); g.fill();
-              /* the spine crease and a few faint print lines */
-              g.strokeStyle = 'rgba(23,48,43,0.35)'; g.lineWidth = 3;
-              g.beginPath(); g.moveTo(cx, bkTop + 10); g.lineTo(cx, bkBot - 2); g.stroke();
-              g.strokeStyle = 'rgba(23,48,43,0.16)'; g.lineWidth = 4;
-              [-1, 1].forEach(function (s) {
-                for (var ln = 0; ln < 3; ln++) {
-                  var ly = bkTop + 20 + ln * 9;
-                  g.beginPath();
-                  g.moveTo(cx + s * 14, ly);
-                  g.lineTo(cx + s * (66 - ln * 7), ly + 1.5);
-                  g.stroke();
-                }
-              });
-              g.restore();
-            }
             ghostTex.needsUpdate = true;
           }
           drawGhost();
@@ -4020,39 +3954,50 @@
           var pumpkinFaceMat = new THREE.MeshBasicMaterial({ color: 0x40260a });
           (function buildPumpkin() {
             var pBump = pumpkinBumpTex();
-            var skin = new THREE.MeshStandardMaterial({ color: 0xe07b24, roughness: 0.55, bumpMap: pBump, bumpScale: 0.35 });
-            var skin2 = new THREE.MeshStandardMaterial({ color: 0xea8a30, roughness: 0.55, bumpMap: pBump, bumpScale: 0.35 });
-            /* one plump, round body: a full sphere barely squashed at
-               all, with two lobes tucked in close at its sides, so the
-               whole thing reads as a round pumpkin with real volume
-               from every angle instead of a flat squashed disc. The
-               bump-mapped grooves still suggest the ribs. */
-            var main = new THREE.Mesh(new THREE.SphereGeometry(0.6, 24, 18), skin);
-            main.scale.set(1, 0.95, 1); main.position.y = 0.57; main.castShadow = true;
+            var skin = new THREE.MeshStandardMaterial({ color: 0xe07b24, roughness: 0.55, bumpMap: pBump, bumpScale: 0.15 });
+            /* a real pumpkin silhouette, built into the shape
+               itself (Evan: "make the pumpkin look more pumpkin
+               like"): the sphere's own vertices are pulled in
+               along ten grooves, the poles are flattened, and a
+               shallow dimple is pressed into the top where the
+               stem sits. The lobes are geometry now, not just
+               bump paint, so the ridges catch real light. */
+            var geo = new THREE.SphereGeometry(0.62, 48, 32);
+            var posA = geo.attributes.position;
+            var vv = new THREE.Vector3();
+            for (var vi = 0; vi < posA.count; vi++) {
+              vv.fromBufferAttribute(posA, vi);
+              var theta = Math.atan2(vv.z, vv.x);
+              var ny = vv.y / 0.62;
+              var groove = 1 - 0.085 * Math.pow(Math.abs(Math.sin(theta * 5)), 0.65);
+              var flat = 1 - 0.13 * Math.pow(Math.abs(ny), 5);
+              vv.x *= groove * flat;
+              vv.z *= groove * flat;
+              if (ny > 0.55) vv.y -= (ny - 0.55) * 0.09;
+              posA.setXYZ(vi, vv.x, vv.y, vv.z);
+            }
+            geo.computeVertexNormals();
+            var main = new THREE.Mesh(geo, skin);
+            main.scale.set(1, 0.88, 1); main.position.y = 0.55; main.castShadow = true;
             pumpkinGroup.add(main);
-            [-0.25, 0.25].forEach(function (x) {
-              var rib = new THREE.Mesh(new THREE.SphereGeometry(0.52, 20, 14), skin2);
-              rib.scale.set(0.88, 0.92, 0.97); rib.position.set(x, 0.57, 0);
-              rib.castShadow = true;
-              pumpkinGroup.add(rib);
-            });
-            var stem = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.085, 0.24, 8), std(0x3e8914, 0.8));
-            stem.position.set(0.03, 1.16, 0); stem.rotation.z = 0.2; stem.castShadow = true;
+            /* a chunkier, browner stem with a real lean to it */
+            var stem = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.1, 0.3, 7), std(0x66701f, 0.85));
+            stem.position.set(0.04, 1.09, 0); stem.rotation.z = 0.32; stem.castShadow = true;
             pumpkinGroup.add(stem);
             var face = new THREE.Group();
-            face.position.set(0, 0.64, 0.5);
+            face.position.set(0, 0.62, 0.54);
             face.rotation.x = -0.08;
             function tri(w, h) {
               var s = new THREE.Shape();
               s.moveTo(-w / 2, 0); s.lineTo(w / 2, 0); s.lineTo(0, h); s.closePath();
               return new THREE.Mesh(new THREE.ShapeGeometry(s), pumpkinFaceMat);
             }
-            var e1 = tri(0.2, 0.15); e1.position.set(-0.21, 0.1, 0.1);
-            var e2 = tri(0.2, 0.15); e2.position.set(0.21, 0.1, 0.1);
-            var nose = tri(0.11, 0.11); nose.position.set(0, -0.04, 0.12);
+            var e1 = tri(0.2, 0.15); e1.position.set(-0.21, 0.1, 0.07);
+            var e2 = tri(0.2, 0.15); e2.position.set(0.21, 0.1, 0.07);
+            var nose = tri(0.11, 0.11); nose.position.set(0, -0.04, 0.09);
             face.add(e1); face.add(e2); face.add(nose);
             var grin = new THREE.Mesh(new THREE.TorusGeometry(0.19, 0.04, 8, 18, Math.PI), pumpkinFaceMat);
-            grin.position.set(0, -0.1, 0.11);
+            grin.position.set(0, -0.1, 0.08);
             grin.rotation.z = Math.PI;
             face.add(grin);
             pumpkinGroup.add(face);
@@ -4074,7 +4019,7 @@
             target: new THREE.Vector3(0, 0.7, 0.4),
             onArrive: null, actItem: null, actT: 0,
             rotY: 0, targetRotY: 0,
-            hopY: 0, faceBoost: 0, twinkle: 0, settle: 0
+            hopY: 0, faceBoost: 0, twinkle: 0
           };
           /* visit spots are computed from wherever the furniture actually
              sits now, so dragging a piece across the room moves the spot
@@ -4093,16 +4038,13 @@
             }
             if (id === 'chair') {
               p = chairGroup.position;
-              so = rotOff(chairGroup, 0.1, 0.24);
-              ao = rotOff(chairGroup, 1.4, 2.4);
-              /* seated height for the smaller body: their drawn sheet
-                 still ends just above the chair's arm tops (1.14), so
-                 the sprite plane never slices through the arms or the
-                 back while they sit — the wispy tail hovers over the
-                 cushion instead. At the new size that perch sits a
-                 touch higher than their floor hover, so they float
-                 up onto the chair rather than sinking into it. */
-              return { spot: new THREE.Vector3(p.x + so.x, 1.07, p.z + so.z), anchor: new THREE.Vector3(p.x + ao.x, 1.2, p.z + ao.z), dur: 5.0 };
+              so = rotOff(chairGroup, 0.95, 1.7);
+              /* she doesn't sit anymore — the CHAIR does the act
+                 now: it wobbles, levitates, and drops back down
+                 (see the chair-like act in startAct), and she
+                 hovers in front of it at her usual height and
+                 watches, facing it. */
+              return { spot: new THREE.Vector3(p.x + so.x, 0.62, p.z + so.z), anchor: new THREE.Vector3(p.x, 0.8, p.z), dur: 5.0 };
             }
             if (id === 'shelf') {
               p = shelfGroup.position;
@@ -4137,13 +4079,19 @@
             tween(0.75, function (k) { spinRot = start + k * Math.PI * 2; }, function () { spinRot = 0; });
           }
           var shelfBrowseOn = false;
+          /* chair-like pieces do the act themselves now: a wobble,
+             a levitation, and a drop back down, while she hovers
+             and watches. Keyed by item id, so any future chair-like
+             piece joins the club by adding its id here. */
+          var CHAIR_LIKE = { chair: true };
+          var chairFloatOn = false;
           function startAct(id) {
             var def = spotFor(id);
             ghostState.mode = 'act';
             ghostState.actItem = id;
             ghostState.actT = def.dur;
             ghostState.targetRotY = Math.atan2(def.anchor.x - ghostGroup.position.x, def.anchor.z - ghostGroup.position.z);
-            expressEyes((id === 'chair' || id === 'shelf') ? 'content' : 'happy', def.dur);
+            expressEyes(id === 'shelf' ? 'content' : 'happy', def.dur);
             if (id === 'lights') ghostState.twinkle = 1;
             if (id === 'pumpkin') {
               ghostState.faceBoost = 1; spinGhost();
@@ -4151,6 +4099,34 @@
                  only if she's still there enjoying the pumpkin */
               tween(2.5, function () {}, function () {
                 if (ghostState.mode === 'act' && ghostState.actItem === 'pumpkin') spinGhost();
+              });
+            }
+            if (CHAIR_LIKE[id] && !chairFloatOn) {
+              /* the five-second float: a smooth rise, a held hover
+                 with a wobble, then a fall that accelerates like
+                 gravity — and at the end the piece is put back on
+                 its exact original transform, even if it was
+                 dragged mid-act (drags never touch y or the x/z
+                 tilt, so restoring those three is safe). */
+              chairFloatOn = true;
+              var grp = itemGroups[id];
+              var baseY = grp.position.y, baseRX = grp.rotation.x, baseRZ = grp.rotation.z;
+              var liftK = REDUCED ? 0.35 : 1;
+              tween(def.dur, function (k) {
+                var lift;
+                if (k < 0.22) { var r = k / 0.22; lift = r * r * (3 - 2 * r); }
+                else if (k > 0.8) { var d = (k - 0.8) / 0.2; lift = 1 - d * d; }
+                else lift = 1;
+                var hoverBob = (k >= 0.22 && k <= 0.8) ? Math.sin(k * Math.PI * 9) * 0.03 : 0;
+                grp.position.y = baseY + (lift * 0.5 + hoverBob) * liftK;
+                var wobEnv = Math.sin(Math.min(1, k * 1.15) * Math.PI);
+                grp.rotation.z = baseRZ + Math.sin(k * Math.PI * 2 * 3.2) * wobEnv * 0.07 * liftK;
+                grp.rotation.x = baseRX + Math.cos(k * Math.PI * 2 * 2.6) * wobEnv * 0.05 * liftK;
+              }, function () {
+                grp.position.y = baseY;
+                grp.rotation.x = baseRX;
+                grp.rotation.z = baseRZ;
+                chairFloatOn = false;
               });
             }
             if (id === 'shelf' && shelfBooks.length && !shelfBrowseOn) {
@@ -4580,7 +4556,6 @@
 
             /* ghost brain */
             var g = ghostState, gp = ghostGroup.position;
-            g.settle += (((g.mode === 'act' && g.actItem === 'chair') ? 1 : 0) - g.settle) * Math.min(1, dt * 4);
             if (g.mode === 'go') {
               var prevX = gp.x, prevZ = gp.z;
               var k = 1 - Math.pow(0.02, dt);
@@ -4623,7 +4598,7 @@
             g.rotY += dr * Math.min(1, dt * 5);
             ghostGroup.rotation.y = g.rotY;
             /* bob + blob shadow */
-            var bobAmp = REDUCED ? 0.02 : (0.085 - g.settle * 0.055);
+            var bobAmp = REDUCED ? 0.02 : 0.085;
             bobGroup.position.y = Math.sin(elapsed * (REDUCED ? 1.1 : 2.1)) * bobAmp + g.hopY;
             bobGroup.rotation.z = Math.sin(elapsed * 1.3) * 0.02 + Math.sin(elapsed * 8.6) * 0.15 * sickLevel * (REDUCED ? 0.35 : 1);
             blob.position.x = gp.x; blob.position.z = gp.z;
@@ -4661,9 +4636,6 @@
             drawState.glance = glanceX;
             /* hex heart: a slow pulse, brighter at night */
             drawState.pulse = 1 + Math.sin(elapsed * 2.2) * 0.07 + nightMix * 0.05;
-            /* reading look rides the chair act: derived fresh each
-               frame, so the glasses and book vanish the moment it ends */
-            drawState.reading = (g.mode === 'act' && g.actItem === 'chair');
             /* queasiness: ramps up fast once she's been shaken, holds
                while sickHoldT runs down, then eases off over a couple
                of seconds — the green cast, the spiral eyes, and the
