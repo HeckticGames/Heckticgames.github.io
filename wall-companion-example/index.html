@@ -1936,6 +1936,13 @@
         }
         function stateSnapshot() {
           return {
+            /* whose room this record is: the account id while
+               logged in, null for a device room nobody has claimed.
+               The bleed fix leans on this stamp — a record owned by
+               one account is never adopted by another (see
+               syncFromServer in the account section). Records saved
+               before the stamp existed read as unclaimed. */
+            owner: (typeof authUserId !== 'undefined' && authUserId != null) ? authUserId : null,
             plus: plusOn,
             owned: ownedItems,
             placed: placedItems,
@@ -2544,6 +2551,7 @@
         var AUTH_KEY = 'relic_auth';
         var authToken = null;
         var authEmail = null;
+        var authUserId = null;
         /* where this account's Plus comes from, per the server:
            'stripe' (a real subscription — the server's word is
            final), 'manual' (the pre-Stripe save-blob flag), or
@@ -2555,6 +2563,7 @@
           if (savedAuth && savedAuth.token) {
             authToken = savedAuth.token;
             authEmail = savedAuth.email || null;
+            authUserId = (typeof savedAuth.user_id === 'number') ? savedAuth.user_id : null;
           }
         } catch (e) {}
         var acctBtn = document.getElementById('btn-acct');
@@ -2583,16 +2592,34 @@
           acctWho.hidden = !loggedIn;
           if (loggedIn) acctWhoEmail.textContent = authEmail || '';
         }
+        /* Back to a fresh, unclaimed room on this device: every
+           item out, default colors, no Plus, and the local record
+           re-stamped as nobody's. The account's room on the SERVER
+           is untouched — logging back in restores it in full. This
+           is the heart of the room-bleed fix: a logged-out browser
+           must not keep showing (or hand over) the last account's
+           room. */
+        function resetLocalRoom() {
+          billingSource = null;
+          applyState(null);
+          writeLocalState();
+        }
         function clearAuth() {
           authToken = null;
           authEmail = null;
+          authUserId = null;
           try { localStorage.removeItem(AUTH_KEY); } catch (e) {}
           updateAuthUI();
+          /* signing out — by choice, or because the token died —
+             also clears the room on this device, so the next
+             person (or the next account) starts clean */
+          resetLocalRoom();
         }
-        function setAuth(token, email) {
+        function setAuth(token, email, userId) {
           authToken = token;
           authEmail = email;
-          try { localStorage.setItem(AUTH_KEY, JSON.stringify({ token: token, email: email })); } catch (e) {}
+          authUserId = (typeof userId === 'number') ? userId : null;
+          try { localStorage.setItem(AUTH_KEY, JSON.stringify({ token: token, email: email, user_id: authUserId })); } catch (e) {}
           updateAuthUI();
         }
         /* one signed fetch for the whole account layer: resolves
@@ -2632,13 +2659,44 @@
             apiFetch('/save', { method: 'PUT', body: JSON.stringify({ data: stateSnapshot() }) }).then(function () {}, function () {});
           }, 800);
         }
+        /* The room LOOK with the money left out of it: colors,
+           the rug's spot, the finishes — the parts that are safe
+           for a device room to hand to a first account. Owned
+           items, the cart, and Plus NEVER travel in a seed:
+           owned means paid for, and Plus is Stripe's word on the
+           server, not a flag a browser can pass along. */
+        function seedSnapshot() {
+          var s = stateSnapshot();
+          return {
+            owner: authUserId,
+            plus: false,
+            owned: {},
+            placed: {},
+            cart: [],
+            ghostC1: s.ghostC1,
+            ghostC2: s.ghostC2,
+            floorTone: s.floorTone,
+            wallPaint: s.wallPaint,
+            chairM: s.chairM,
+            chairC: s.chairC,
+            rugColor: s.rugColor,
+            shelfColor: s.shelfColor,
+            pos: s.pos
+          };
+        }
         /* pull the account's room down: the server record goes
            through the same restore routine the local record uses
-           and wins, then becomes the local cache. No record yet
-           (data: null), or a stored blob that isn't a hub record
-           at all, means this device's room becomes the account's
-           room instead — and overwrites the junk with a valid
-           record. */
+           and wins, then becomes the local cache, stamped as this
+           account's. No record yet (data: null), or a stored blob
+           that isn't a hub record at all, splits two ways:
+           - the device room is unclaimed, or already this
+             account's: its LOOK becomes the account's starting
+             room (seedSnapshot — never the money fields);
+           - the device room belongs to a DIFFERENT account: it
+             is not this account's to take. Start clean, and save
+             the clean room as this account's own.
+           Either way the result is written up, so a non-record
+           blob is replaced with a valid record, as before. */
         function syncFromServer() {
           if (!authToken) return;
           apiFetch('/save').then(function (r) {
@@ -2646,8 +2704,19 @@
             if (r.data && isHubRecord(r.data.data)) {
               applyState(r.data.data);
               writeLocalState();
+              /* a blob can predate a real subscription — let the
+                 billing truth have the last word on Plus */
+              refreshBillingStatus();
             } else if (authToken) {
-              apiFetch('/save', { method: 'PUT', body: JSON.stringify({ data: stateSnapshot() }) }).then(function () {}, function () {});
+              var local = loadState();
+              var localOwner = local ? local.owner : null;
+              if (localOwner == null || localOwner === authUserId) {
+                applyState(seedSnapshot());
+              } else {
+                applyState(null);
+              }
+              writeLocalState();
+              apiFetch('/save', { method: 'PUT', body: JSON.stringify({ data: stateSnapshot() }) }).then(function () { refreshBillingStatus(); }, function () {});
             }
           }, function () {});
         }
@@ -2692,7 +2761,7 @@
             acctBusy = false;
             acctSubmit.disabled = false;
             if ((r.status === 200 || r.status === 201) && r.data && r.data.token) {
-              setAuth(r.data.token, email);
+              setAuth(r.data.token, email, r.data.user_id);
               acctPassInput.value = '';
               setAcctOpen(false);
               syncFromServer();
