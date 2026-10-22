@@ -1497,6 +1497,10 @@
            no timer; the reply holds in the pill for thirty seconds
            either way (see REPLY_HOLD_MS below). */
         var LINGER_MS = 15000;
+        /* how long she stays close after her VOICE finishes
+           before drifting back — counted from the end of her
+           talking, at Evan's request (five seconds) */
+        var POST_SPEAK_LINGER_MS = 5000;
         /* Her replies to a message — typed or spoken — hold in the
            pill for a full thirty seconds before fading: answers,
            especially the long ones from the full-size brain, were
@@ -1525,11 +1529,11 @@
             wakeBtn.title = convActive ? 'Bye — end the conversation' : 'Hey — talk to Relic';
           }
         }
-        function scheduleLinger() {
+        function scheduleLinger(ms) {
           clearTimeout(convTimer);
           convTimer = null;
           if (!convActive) return;
-          convTimer = setTimeout(endConversation, LINGER_MS);
+          convTimer = setTimeout(endConversation, ms || LINGER_MS);
         }
         function stopCurrentListening() {
           if (currentRec) {
@@ -2769,6 +2773,14 @@
           /* her turn is over: if a conversation is still holding
              her close, open her ears again for the answer */
           if (convActive) scheduleFollowUpListening(500);
+          /* and restart the drift-back countdown from THIS
+             moment, five seconds of it: the standing countdown
+             starts when her reply text lands, so her own talking
+             used to spend most of it and she drifted away the
+             moment she finished (Evan's report). From the end of
+             her voice he now gets a full five seconds to answer
+             before she goes back. */
+          if (convActive) scheduleLinger(POST_SPEAK_LINGER_MS);
         }
         function onAudioEnded() {
           if (speakPartIdx < speakParts.length - 1) {
