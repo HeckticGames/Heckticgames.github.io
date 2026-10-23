@@ -572,6 +572,10 @@
         padding: 3px;
         width: 148px;
         display: flex; flex-direction: column; gap: 0;
+        /* Never clipped by the stage: on a short screen the panel
+           stops above the bottom edge and scrolls internally. */
+        max-height: calc(100% - 54px);
+        overflow-y: auto;
       }
       .settings-pop[hidden] { display: none; }
       .set-row {
@@ -597,6 +601,21 @@
       }
       .set-loc-input:focus { border-color: var(--teal-bright); }
       .set-loc-note { color: rgba(232, 242, 238, 0.62); font-size: 7.5px; line-height: 1.25; margin-top: 2px; }
+
+      /* On phones the panel runs a touch smaller all over — the
+         Home location block added just enough height for the last
+         rows to crowd the bottom edge. */
+      @media (max-width: 560px) {
+        .settings-pop { width: 132px; padding: 2px; }
+        .set-row { font-size: 8.5px; padding: 1px 3px; }
+        .set-row .set-state { font-size: 8px; }
+        .set-colors { padding: 0 3px 1px; }
+        .set-colors-label { font-size: 8px; margin-bottom: 1px; }
+        .set-swatches .swatch { width: 11px; height: 11px; }
+        .set-loc { padding: 0 3px 2px; }
+        .set-loc-input { font-size: 8.5px; padding: 1px 3px; }
+        .set-loc-note { font-size: 7px; line-height: 1.2; margin-top: 1px; }
+      }
 
       /* Color tray — a plain bar of swatches at the top-center of the
          screen: just the color dots, no title, no item name, no text
