@@ -620,24 +620,11 @@
       @keyframes trayin { from { transform: translateX(-50%) translateY(-14px); opacity: 0; } to { transform: translateX(-50%) translateY(0); opacity: 1; } }
       .tray .swatch { width: 21px; height: 21px; }
 
-      /* Rotate bar — two small turn buttons that appear while a
-         movable piece (rug, chair, bookshelf) is selected. It sits
-         at the top of the screen, stacked directly under the color
-         tray (showRotbar sets its top from the tray's height), so
-         the lower room stays clear on small screens. */
-      .rotbar {
-        position: absolute; left: 50%; top: 10px; transform: translateX(-50%);
-        z-index: 7;
-        display: flex; align-items: center; gap: 6px;
-        background: rgba(16, 20, 24, 0.82);
-        backdrop-filter: blur(6px);
-        border: 1px solid rgba(255,255,255,0.16);
-        border-radius: 999px;
-        padding: 4px 9px;
-        width: max-content; max-width: calc(100% - 16px);
-      }
-      .rotbar[hidden] { display: none; }
-      .rotbar-label { color: #e8f2ee; font-size: 10px; font-weight: 800; letter-spacing: 0.04em; white-space: nowrap; }
+      /* Rotate — a single clockwise button, no label, that moves
+         into the open color tray and sits at the end of the swatch
+         row while a movable piece (rug, chair, bookshelf) is
+         selected. One control, right next to the colors. */
+      .rot-btn[hidden] { display: none; }
       .rot-btn {
         width: 24px; height: 24px; border-radius: 50%; flex: none;
         border: 1px solid rgba(255,255,255,0.4);
@@ -895,11 +882,7 @@
                     <button class="swatch" data-c="#2f7f76" style="background:#2f7f76" aria-label="Teal paint"></button>
                   </div>
 
-                  <div class="rotbar" id="rotbar" hidden>
-                    <span class="rotbar-label" id="rotbar-label">Item</span>
-                    <button class="rot-btn" id="rot-left" aria-label="Rotate left" title="Rotate left">&#8634;</button>
-                    <button class="rot-btn" id="rot-right" aria-label="Rotate right" title="Rotate right">&#8635;</button>
-                  </div>
+                  <button class="rot-btn" id="rot-btn" hidden aria-label="Rotate clockwise" title="Rotate clockwise">&#8635;</button>
 
                   <div class="boot" id="boot">
                     <svg class="hexmark" width="54" height="60" viewBox="0 0 54 60">
@@ -1246,7 +1229,7 @@
            item is clicked again. A tap spent dismissing options is
            consumed by the dismissal: it never also moves the ghost. */
         function anyOptionsOpen() {
-          return tray.classList.contains('open') || trayChair.classList.contains('open') || trayRug.classList.contains('open') || trayShelf.classList.contains('open') || !rotbar.hidden || !settingsPop.hidden || !shopPop.hidden || !plusPop.hidden || !checkoutPop.hidden || (typeof acctPop !== 'undefined' && acctPop && !acctPop.hidden);
+          return tray.classList.contains('open') || trayChair.classList.contains('open') || trayRug.classList.contains('open') || trayShelf.classList.contains('open') || !rotBtn.hidden || !settingsPop.hidden || !shopPop.hidden || !plusPop.hidden || !checkoutPop.hidden || (typeof acctPop !== 'undefined' && acctPop && !acctPop.hidden);
         }
         function closeAllOptions() {
           closeAllTrays();
@@ -1258,48 +1241,35 @@
           if (typeof acctPop !== 'undefined' && acctPop && !acctPop.hidden) setAcctOpen(false);
         }
 
-        /* Rotate bar — appears while a movable piece (the rug, the
-           reading chair, the bookshelf) is selected: two small buttons
-           turn the piece in 45-degree steps so it can face a new
-           direction after it's been dragged into place. */
-        var rotbar = document.getElementById('rotbar');
-        var rotbarLabel = document.getElementById('rotbar-label');
+        /* Rotate — while a movable piece (the rug, the reading
+           chair, the bookshelf) is selected, a single clockwise
+           button rides at the end of that piece's color tray, next
+           to the swatches: no label, no separate bar. Each tap turns
+           the piece 45 degrees clockwise. */
+        var rotBtn = document.getElementById('rot-btn');
         var selectedItem = null;
         var rotTimer = null;
-        var rotNames = { rug: 'Rug', chair: 'Reading chair', shelf: 'Bookshelf' };
         function showRotbar(id) {
           selectedItem = id;
-          rotbarLabel.textContent = rotNames[id] || 'Item';
-          rotbar.hidden = false;
-          /* Stack under whichever color tray is open, so the two
-             option rows read as one group at the top. */
           var anchor = null;
           [tray, trayChair, trayRug, trayShelf].forEach(function (t) {
             if (!anchor && t.classList.contains('open')) anchor = t;
           });
-          rotbar.style.top = anchor
-            ? (anchor.offsetTop + anchor.offsetHeight + 8) + 'px'
-            : '10px';
+          if (anchor) anchor.appendChild(rotBtn);
+          rotBtn.hidden = false;
           clearTimeout(rotTimer);
           rotTimer = setTimeout(hideRotbar, 8000);
         }
         function hideRotbar() {
           selectedItem = null;
-          rotbar.hidden = true;
-          rotbar.style.top = '';
+          rotBtn.hidden = true;
           clearTimeout(rotTimer);
         }
         function keepRotbar() {
           clearTimeout(rotTimer);
           rotTimer = setTimeout(hideRotbar, 8000);
         }
-        document.getElementById('rot-left').addEventListener('click', function () {
-          if (!selectedItem || !room3d) return;
-          room3d.rotateItem(selectedItem, -1);
-          sndBoop();
-          keepRotbar();
-        });
-        document.getElementById('rot-right').addEventListener('click', function () {
+        rotBtn.addEventListener('click', function () {
           if (!selectedItem || !room3d) return;
           room3d.rotateItem(selectedItem, 1);
           sndBoop();
@@ -2469,7 +2439,7 @@
           var t = ev.target;
           var glWrap = document.getElementById('gl');
           if (glWrap && glWrap.contains(t)) return;
-          if (tray.contains(t) || trayChair.contains(t) || trayRug.contains(t) || trayShelf.contains(t) || rotbar.contains(t) || shopPop.contains(t) || plusPop.contains(t) || checkoutPop.contains(t) || (acctPop && acctPop.contains(t))) return;
+          if (tray.contains(t) || trayChair.contains(t) || trayRug.contains(t) || trayShelf.contains(t) || rotBtn.contains(t) || shopPop.contains(t) || plusPop.contains(t) || checkoutPop.contains(t) || (acctPop && acctPop.contains(t))) return;
           closeAllOptions();
         });
         document.addEventListener('keydown', function (ev) { if (ev.key === 'Escape') closeAllOptions(); });
