@@ -570,7 +570,7 @@
         border: 1px solid rgba(255, 255, 255, 0.16);
         border-radius: 8px;
         padding: 3px;
-        width: 104px;
+        width: 148px;
         display: flex; flex-direction: column; gap: 0;
       }
       .settings-pop[hidden] { display: none; }
@@ -587,6 +587,16 @@
       .set-colors-label { color: #e8f2ee; font-size: 8.5px; font-weight: 700; line-height: 1.2; margin-bottom: 2px; }
       .set-swatches { display: flex; flex-wrap: nowrap; gap: 2px; }
       .set-swatches .swatch { width: 13px; height: 13px; border-width: 1px; }
+      .set-loc { padding: 1px 4px 3px; }
+      .set-loc-input {
+        width: 100%; box-sizing: border-box;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.22); border-radius: 4px;
+        color: #e8f2ee; font-size: 9px; font-family: inherit;
+        padding: 2px 4px; outline: none;
+      }
+      .set-loc-input:focus { border-color: var(--teal-bright); }
+      .set-loc-note { color: rgba(232, 242, 238, 0.62); font-size: 7.5px; line-height: 1.25; margin-top: 2px; }
 
       /* Color tray — a plain bar of swatches at the top-center of the
          screen: just the color dots, no title, no item name, no text
@@ -817,6 +827,11 @@
                     <button class="set-row" id="set-sound" aria-pressed="false"><span>Sound</span><span class="set-state">On</span></button>
                     <button class="set-row" id="set-night" aria-pressed="false"><span>Night mode</span><span class="set-state">Off</span></button>
                     <button class="set-row" id="set-voice" aria-pressed="true"><span>Voice replies</span><span class="set-state">On</span></button>
+                    <div class="set-loc">
+                      <div class="set-colors-label">Home location</div>
+                      <input class="set-loc-input" id="set-loc" type="text" placeholder="City, State" autocomplete="off" maxlength="60" />
+                      <div class="set-loc-note">So she knows the weather where you are.</div>
+                    </div>
                     <div class="set-colors">
                       <div class="set-colors-label">Floor tone</div>
                       <div class="set-swatches" id="set-floor" role="group" aria-label="Pick the floor's wood tone">
@@ -1917,6 +1932,7 @@
         var currentChairC = DEFAULT_CHAIR_C;
         var currentRugColor = DEFAULT_RUG_COLOR;
         var currentShelfColor = DEFAULT_SHELF_COLOR;
+        var currentHomeLoc = '';
         function markSwatchActive(container, attr, value) {
           if (!container) return;
           container.querySelectorAll('.swatch').forEach(function (s) {
@@ -1975,7 +1991,7 @@
           return ('plus' in blob) || ('owned' in blob) || ('placed' in blob) || ('cart' in blob) ||
             ('ghostC1' in blob) || ('ghostC2' in blob) || ('floorTone' in blob) || ('wallPaint' in blob) ||
             ('chairM' in blob) || ('chairC' in blob) || ('rugColor' in blob) || ('shelfColor' in blob) ||
-            ('pos' in blob);
+            ('pos' in blob) || ('homeLoc' in blob);
         }
         /* Where every placed piece currently sits, pulled live from
            the room at snapshot time: positions drift with drags and
@@ -2024,6 +2040,7 @@
             chairC: currentChairC,
             rugColor: currentRugColor,
             shelfColor: currentShelfColor,
+            homeLoc: currentHomeLoc,
             pos: collectPositions()
           };
         }
@@ -2364,6 +2381,12 @@
           );
           applyRugColor((s && typeof s.rugColor === 'string' && s.rugColor) ? s.rugColor : DEFAULT_RUG_COLOR);
           applyShelfColor((s && typeof s.shelfColor === 'string' && s.shelfColor) ? s.shelfColor : DEFAULT_SHELF_COLOR);
+          /* her sense of "my area": the home location saved in the
+             record, or none. The server reads it out of the record
+             when she looks the weather up (v12). */
+          currentHomeLoc = (s && typeof s.homeLoc === 'string') ? s.homeLoc : '';
+          var locInputEl = document.getElementById('set-loc');
+          if (locInputEl) locInputEl.value = currentHomeLoc;
           Object.keys(ITEM_DEFS).forEach(function (id) {
             renderShopItem(id);
             if (!room3d) return;
@@ -2410,6 +2433,18 @@
           ev.stopPropagation();
           setSettingsOpen(settingsPop.hidden);
         });
+        /* Home location: free text, saved into the room record on
+           change (which also carries it to the server with the rest
+           of the record). She reads it there when someone asks about
+           the weather in "my area" (server v12 lookup). */
+        var setLocInput = document.getElementById('set-loc');
+        if (setLocInput) {
+          setLocInput.addEventListener('change', function () {
+            currentHomeLoc = setLocInput.value.trim().slice(0, 60);
+            setLocInput.value = currentHomeLoc;
+            saveState();
+          });
+        }
         settingsPop.addEventListener('click', function (ev) { ev.stopPropagation(); });
         /* Clicking away — anywhere off the options themselves —
            closes every options surface: the gear popover, the color
