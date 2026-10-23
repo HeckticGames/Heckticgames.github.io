@@ -377,6 +377,9 @@
       }
       @media (prefers-color-scheme: dark) { .acct-link { color: var(--teal-bright); } }
       .acct-who { margin: 0; font-size: 13.5px; line-height: 1.5; }
+      .acct-trial { margin: 4px 0 0; font-size: 12.5px; font-weight: 700; line-height: 1.45; color: var(--teal-deep); }
+      @media (prefers-color-scheme: dark) { .acct-trial { color: var(--teal-bright); } }
+      .acct-trial[hidden] { display: none; }
 
       .shop-pop {
         width: 100%; max-width: 680px;
@@ -1129,6 +1132,7 @@
             </form>
             <div id="acct-who" hidden>
               <p class="acct-who">Logged in as <b id="acct-who-email"></b></p>
+              <p class="acct-trial" id="acct-trial" hidden></p>
               <div class="acct-actions">
                 <button class="acct-submit" id="acct-logout" type="button">Log out</button>
               </div>
@@ -3081,6 +3085,7 @@
             }
           }
           apiFetch('/chat', { method: 'POST', body: JSON.stringify({ message: text }) }).then(function (r) {
+            if (r.data && r.data.usage) renderTrialLine(r.data.usage);
             if (r.status === 401) { deliverDemoMessage(text); return; }
             if (r.status === 200 && r.data && r.data.reply) {
               showLine(r.data.reply);
@@ -3120,10 +3125,26 @@
            on. Managing or cancelling: Stripe's own billing portal,
            same round trip. refreshBillingStatus() keeps what this
            page shows in step with the server's word. */
+        /* Trial countdown in the account panel (v12.2): the server
+           reports the chat allowance with every status read and every
+           chat reply; a free account sees how many smart chats it has
+           left instead of meeting the limit by surprise. Plus and
+           owner accounts don't show the line. */
+        var acctTrialEl = document.getElementById('acct-trial');
+        function renderTrialLine(usage) {
+          if (!acctTrialEl) return;
+          if (usage && usage.tier === 'trial' && typeof usage.remaining === 'number') {
+            acctTrialEl.textContent = 'Free trial: ' + usage.remaining + ' of ' + usage.limit + ' chats left';
+            acctTrialEl.hidden = false;
+          } else {
+            acctTrialEl.hidden = true;
+          }
+        }
         function refreshBillingStatus() {
           if (!authToken) return;
           apiFetch('/billing/status').then(function (r) {
             if (r.status !== 200 || !r.data) return;
+            renderTrialLine(r.data.usage);
             billingSource = r.data.source || null;
             if (billingSource === 'stripe') {
               var truth = !!r.data.plus;
