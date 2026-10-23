@@ -621,9 +621,12 @@
       .tray .swatch { width: 21px; height: 21px; }
 
       /* Rotate bar — two small turn buttons that appear while a
-         movable piece (rug, chair, bookshelf) is selected */
+         movable piece (rug, chair, bookshelf) is selected. It sits
+         at the top of the screen, stacked directly under the color
+         tray (showRotbar sets its top from the tray's height), so
+         the lower room stays clear on small screens. */
       .rotbar {
-        position: absolute; left: 50%; bottom: 74px; transform: translateX(-50%);
+        position: absolute; left: 50%; top: 10px; transform: translateX(-50%);
         z-index: 7;
         display: flex; align-items: center; gap: 6px;
         background: rgba(16, 20, 24, 0.82);
@@ -1268,12 +1271,22 @@
           selectedItem = id;
           rotbarLabel.textContent = rotNames[id] || 'Item';
           rotbar.hidden = false;
+          /* Stack under whichever color tray is open, so the two
+             option rows read as one group at the top. */
+          var anchor = null;
+          [tray, trayChair, trayRug, trayShelf].forEach(function (t) {
+            if (!anchor && t.classList.contains('open')) anchor = t;
+          });
+          rotbar.style.top = anchor
+            ? (anchor.offsetTop + anchor.offsetHeight + 8) + 'px'
+            : '10px';
           clearTimeout(rotTimer);
           rotTimer = setTimeout(hideRotbar, 8000);
         }
         function hideRotbar() {
           selectedItem = null;
           rotbar.hidden = true;
+          rotbar.style.top = '';
           clearTimeout(rotTimer);
         }
         function keepRotbar() {
