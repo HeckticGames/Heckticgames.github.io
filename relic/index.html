@@ -1510,8 +1510,13 @@
            especially the long ones from the full-size brain, were
            gone before they could be read. The fifteen-second linger
            above still governs how long she stays close; only the
-           words' hold is longer. */
+           words' hold is longer. One exception, at Evan's request:
+           when a reply is actually SPOKEN, its text fades three
+           seconds after her voice finishes (see finishSpeaking) —
+           once you've heard her say it, the words hanging around
+           for the rest of the thirty seconds is just clutter. */
         var REPLY_HOLD_MS = 30000;
+        var POST_SPEAK_TEXT_HOLD_MS = 3000;
         var convActive = false;
         var convTimer = null;
         var convListenTimer = null;
@@ -1637,7 +1642,13 @@
             if (!followUp) say("My ears don't work here — type to me below.", 5600);
             return false;
           }
-          rec.lang = 'en-US';
+          /* listen in the visitor's own device language, not
+             always English: a phone set to German hears German,
+             set to Chinese hears Chinese. Falls back to en-US
+             when the browser reports nothing. Her brain and her
+             voice already follow the language of the text, so
+             this makes spoken conversation work end to end. */
+          rec.lang = (navigator.language || 'en-US');
           /* interim results ON: she hears his words as he says
              them, not only after he fully stops — a long sentence
              used to produce silence at this layer until the end,
@@ -2802,10 +2813,26 @@
            parts are fetched in parallel and played in order;
            speakGen invalidates stale work whenever she's cut off */
         var speakParts = [], speakFetches = [], speakPartIdx = 0, speakGen = 0;
+        /* the reply text currently being spoken, and whether any
+           of its audio actually played: when she finishes, the
+           pill text for THAT reply fades three seconds later
+           instead of serving out the full thirty-second hold */
+        var spokenReplyText = null;
+        var voicePlayedThisReply = false;
         function finishSpeaking() {
           speakParts = []; speakFetches = []; speakPartIdx = 0;
           if (!voicePlaying) return;
           voicePlaying = false;
+          var finishedText = spokenReplyText;
+          var didPlay = voicePlayedThisReply;
+          spokenReplyText = null;
+          voicePlayedThisReply = false;
+          if (didPlay && finishedText && mqText.textContent === finishedText) {
+            clearTimeout(sayTimer);
+            sayTimer = setTimeout(function () {
+              if (mqText.textContent === finishedText) marqueeEl.classList.remove('show');
+            }, POST_SPEAK_TEXT_HOLD_MS);
+          }
           /* her turn is over: if a conversation is still holding
              her close, open her ears again for the answer */
           if (convActive) scheduleFollowUpListening(500);
@@ -2840,6 +2867,8 @@
         function stopVoice() {
           speakGen++;
           voicePlaying = false;
+          spokenReplyText = null;
+          voicePlayedThisReply = false;
           speakParts = []; speakFetches = []; speakPartIdx = 0;
           if (voiceAudio) { try { voiceAudio.pause(); } catch (e) {} }
           if (voiceUrl) { try { URL.revokeObjectURL(voiceUrl); } catch (e) {} voiceUrl = null; }
@@ -2886,6 +2915,7 @@
             voiceUrl = URL.createObjectURL(blob);
             voiceAudio.src = voiceUrl;
             voicePlaying = true;
+            voicePlayedThisReply = true;
             var p = voiceAudio.play();
             if (p && p.catch) p.catch(function () { if (gen === speakGen) finishSpeaking(); });
           });
@@ -2899,6 +2929,8 @@
           stopCurrentListening();
           clearTimeout(convListenTimer); convListenTimer = null;
           stopVoice();
+          spokenReplyText = text;
+          voicePlayedThisReply = false;
           speakParts = splitSpeakParts(text);
           speakPartIdx = 0;
           speakFetches = speakParts.map(function (part) { return fetchSpeakAudio(part); });
