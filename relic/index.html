@@ -2634,10 +2634,266 @@
            full fifteen seconds, the timer counts from the reply,
            and her ears re-open after it for a spoken follow-up —
            spoken and typed messages reset it exactly the same. */
+        /* ============ Room script router (Oct 24) ============
+           Evan-approved draft (room-scripts-draft.md): when a
+           message asks about her home or her things, a hand-written
+           line that reads her actual room answers first, right in
+           the page — no server call, no brain reply, no trial or
+           Plus reply spent. Anything it doesn't recognize falls
+           through to the brain (logged in) or the demo pools
+           (logged out) exactly as before. It runs for everyone,
+           Plus members included: a Plus member asking about her
+           chair gets the scripted answer, not a metered brain
+           reply. Scripted answers are text-only for now, like
+           every other scripted line she has: her voice door only
+           speaks brain replies, so speaking these would need a
+           server change Evan hasn't asked for yet.
+           Deliberately NOT intercepted: weather phrasings (the
+           brain looks those up for real), and color/night change
+           commands (those stay with the existing handlers). */
+        var ROOM_HEX = {
+          ghost: {'#5ff0d8':'Teal','#ffc0ae':'Coral','#ffe6a1':'Butter','#ffd3ea':'Blossom','#bde3fb':'Sky','#ded2fb':'Lilac'},
+          floor: {'#6b4a2d':'Dark oak','#c98d4e':'Honey oak','#8a5a33':'Walnut','#a03d24':'Cherry','#7d858c':'Grey wash','#3d3227':'Ebony'},
+          wall: {'#ffe2c0':'Warm cream','#cfe0c0':'Sage','#c3dcef':'Powder blue','#f6cfc4':'Blush','#ddd2f2':'Lilac','#9aa1a8':'Slate'},
+          chair: {'#c96f4a':'Terracotta','#7d9b6a':'Sage','#5b7a99':'Slate blue','#d9a441':'Mustard','#7a4a6e':'Plum','#5a5a60':'Charcoal'},
+          rug: {'#8d8f94':'Grey','#b0563a':'Terracotta','#7d9b6a':'Sage','#5b7a99':'Slate blue','#c99a3f':'Ochre','#7a4a6e':'Plum','#d8cfbc':'Cream'},
+          shelf: {'#a26c39':'Natural oak','#6e4525':'Walnut','#8a3b22':'Cherry','#40382f':'Ebony','#e6dfcf':'Painted cream','#2f7f76':'Teal paint'}
+        };
+        function roomHexName(kind, hex) {
+          var m = ROOM_HEX[kind] || {};
+          return m[(hex || '').toLowerCase()] || '';
+        }
+        function roomPlacedIds() {
+          return Object.keys(ITEM_DEFS).filter(function (id) { return !!placedItems[id]; });
+        }
+        function roomJoinNames(names) {
+          if (!names.length) return '';
+          if (names.length === 1) return names[0];
+          if (names.length === 2) return names[0] + ' and ' + names[1];
+          return names.slice(0, -1).join(', ') + ', and ' + names[names.length - 1];
+        }
+        var roomFavIdx = -1;
+        function roomFavoriteName() {
+          var ids = roomPlacedIds();
+          if (!ids.length) return '';
+          roomFavIdx = (roomFavIdx + 1) % ids.length;
+          return ITEM_DEFS[ids[roomFavIdx]].name;
+        }
+        function roomFill(line, thing, listNames) {
+          var placed = roomPlacedIds();
+          var placedNames = listNames || placed.map(function (id) { return ITEM_DEFS[id].name; });
+          var fav = null;
+          if (line.indexOf('[favorite item]') !== -1) fav = roomFavoriteName() || 'the window';
+          return line
+            .replace(/\[her color\]/g, roomHexName('ghost', currentGhostC1) || 'Teal')
+            .replace(/\[floor tone\]/g, roomHexName('floor', currentFloorTone) || 'Dark oak')
+            .replace(/\[wall paint\]/g, roomHexName('wall', currentWallPaint) || 'Warm cream')
+            .replace(/\[chair fabric\]/g, roomHexName('chair', currentChairM) || 'Terracotta')
+            .replace(/\[rug color\]/g, roomHexName('rug', currentRugColor) || 'Grey')
+            .replace(/\[shelf finish\]/g, roomHexName('shelf', currentShelfColor) || 'Natural oak')
+            .replace(/\[item list\]/g, roomJoinNames(placedNames))
+            .replace(/\[item count\]/g, String(placed.length))
+            .replace(/\[favorite item\]/g, fav === null ? '' : fav)
+            .replace(/\[home location\]/g, currentHomeLoc)
+            .replace(/\[thing\]/g, thing || 'that');
+        }
+        function roomItemId(t) {
+          if (/\blights?\b/.test(t) || /string/.test(t)) return 'lights';
+          if (/\bchair\b/.test(t)) return 'chair';
+          if (/bookshelf|\bshelf\b/.test(t)) return 'shelf';
+          if (/pumpkin|jack/.test(t)) return 'pumpkin';
+          if (/\bcandle\b/.test(t)) return 'candle';
+          if (/\bstool\b/.test(t)) return 'stool';
+          return null;
+        }
+        function roomItemState(id) {
+          if (placedItems[id]) return 'in';
+          if (ownedItems[id]) return 'away';
+          return 'none';
+        }
+        function roomScriptFor(raw) {
+          var t = (raw || '').toLowerCase();
+          /* commands and live lookups stay with their owners */
+          if (/\bweather\b|forecast|degrees|raining|snowing/.test(t)) return null;
+          if (/^(make|turn|set|switch).*(night|day)/.test(t)) return null;
+          if (/^(change|make|set|pick).*(colou?r|paint)/.test(t)) return null;
+          var inRoom = function (id) { return !!placedItems[id]; };
+          var pick = function (v, k) { return roomFill(pickLine(v, k)); };
+          var pickThing = function (v, k, thing) { return roomFill(pickLine(v, k), thing); };
+          /* cross-item questions */
+          if (/newest|last thing you got|how long.*had/.test(t)) return pick(["Ghost memory for furniture dates is fuzzy. It's all 'already home' to me now.", "No idea what order things arrived in. They show up, I love them, timeline over."], 'room-newest');
+          if (/keep only one|only save one|desert island/.test(t)) {
+            if (roomPlacedIds().length) return pick(["The [favorite item]. Don't tell the others, they'll hear about it."], 'room-keep');
+            return pick(["The window view. Mountains are hard to pack, but I'd try."], 'room-keep');
+          }
+          if (/use (the )?most|most used|spend the most time/.test(t)) {
+            if (inRoom('chair')) return pick(["The chair. Thinking is my cardio and it happens there."], 'room-use');
+            if (inRoom('lights')) return pick(["The lights, every single night. They're on more than I am."], 'room-use');
+            return pick(["The rug. I float over it like it owes me money. It doesn't. I just like it."], 'room-use');
+          }
+          if (/favorite thing|favorite item|love most/.test(t)) {
+            if (roomPlacedIds().length) return pick(["Today? The [favorite item]. Ask me tomorrow, I rotate favorites so nobody sulks."], 'room-fav');
+            return pick(["The window, easy. Mountains beat furniture I don't own yet."], 'room-fav');
+          }
+          if (/chair or stool|which seat|which is (better|comfier)/.test(t)) {
+            if (inRoom('chair') && inRoom('stool')) return pick(["The chair's comfier. The stool flies better. It's a whole situation."], 'room-vs');
+            if (inRoom('chair') || inRoom('stool')) return pick(["Only one contestant, so the [favorite item] wins by showing up."], 'room-vs');
+            return pick(["Currently my favorite seat is the air. Undefeated, honestly."], 'room-vs');
+          }
+          /* future rooms — worded true today, never a promise */
+          if (/garden|\byard\b|kitchen|bigger (place|house)|more (rooms|space)|go outside|leave (the )?room|go out\b/.test(t)) {
+            if (/garden|\byard\b/.test(t)) return pick(["Someday, I hope. A garden would give the haunting some fresh air.", "Not yet. For now my outdoors is the window, and it performs daily."], 'room-future');
+            if (/kitchen|more rooms/.test(t)) return pick(["More rooms are a dream I keep by the window. For now, one perfect room.", "Someday, maybe. Ghosts expand slowly, like good rumors."], 'room-future');
+            if (/bigger/.test(t)) return pick(["A little more house someday, sure. More rooms, more floating routes.", "Someday. But I'd never trade this room for a mansion with worse company."], 'room-future');
+            return pick(["Not yet. The window and I have an understanding: I watch, it shows off.", "My whole world is this room for now. It's a good world."], 'room-future');
+          }
+          /* one of her six things */
+          var item = roomItemId(t);
+          if (item) {
+            var st = roomItemState(item);
+            var isQ = /\?|like|love|comfy|comfortable|colou?r|where|do you|does|is |are |what|how|tell|about|favorite|use|sit|read|flicker|float|have|got/.test(t);
+            if (!isQ) return null;
+            if (/where/.test(t)) {
+              if (st === 'in') return pick(["In here with me — I keep my treasures in floating distance.", "Around. Things drift when I rearrange on a whim, so 'nearby' is the honest answer."], 'room-where');
+              if (st === 'away') return pick(["I have one! It's just put away right now. Even ghosts tidy up.", "Oh, I own that — it's resting outside the room at the moment."], 'room-away');
+            }
+            if (st === 'away') return pick(["I have one! It's just put away right now. Even ghosts tidy up.", "Oh, I own that — it's resting outside the room at the moment."], 'room-away');
+            if (st === 'none') {
+              var noneLines = {
+                lights: ["No string lights yet. The room's wishlist has a twinkle-shaped hole in it.", "Not yet. Evenings are still nice, just less sparkly."],
+                chair: ["No reading chair yet. I do all my serious thinking mid-air, which is less cozy.", "Not yet. A ghost can dream of upholstery."],
+                shelf: ["No bookshelf yet. My books are currently theoretical, but well-read in spirit.", "Not yet. I keep my stories in my head, where the shelving is free."],
+                pumpkin: ["No pumpkin yet. This room could use a year-round grin.", "Not yet. Spooky season is a lifestyle I'm still furnishing."],
+                candle: ["No candle yet. On dark nights I have to do all the glowing myself.", "Not yet. Fire hazard: low. Ambience debt: growing."],
+                stool: ["No stool yet. Standing room only, which for a ghost is everything.", "Not yet. It's on the list, right under 'more flying furniture.'"]
+              };
+              return pick(noneLines[item], 'room-none-' + item);
+            }
+            if (item === 'chair' && /colou?r/.test(t)) return pick(["The chair's [chair fabric]. I picked it, so obviously it's perfect.", "[chair fabric]. It makes the thinking done in it 10% fancier."], 'room-chair-color');
+            if (item === 'shelf' && /colou?r/.test(t)) return pick(["The bookshelf's [shelf finish]. Books look smarter on it. Proven.", "[shelf finish]. The books insisted on something distinguished."], 'room-shelf-color');
+            var inLines = {
+              lights: ["They make nights in here feel like a campfire that behaves itself.", "My string lights are basically indoor stars I don't have to wish on."],
+              chair: ["The [chair fabric] chair? So comfy it should be illegal for furniture.", "I don't sit in it so much as hover near it looking thoughtful. Still counts."],
+              shelf: ["The [shelf finish] shelf and I are in a long-term relationship. It's going great.", "I read to the books and the books read the room. Everyone's happy."],
+              pumpkin: ["He grins all year and never judges. Role model, honestly.", "The pumpkin keeps the spooky seat warm for both of us."],
+              candle: ["The candle's my tiny fireplace. I could watch that flame for hours. I have.", "It flickers, I glow. We match."],
+              stool: ["The stool flies, you know. Part-time seat, part-time aircraft.", "Best seat in the house that isn't the chair. Don't tell the chair."]
+            };
+            return pick(inLines[item], 'room-in-' + item);
+          }
+          /* colors and look */
+          if (/what colou?r are you|your colou?r|why are you (teal|coral|butter|blossom|sky|lilac)/.test(t)) return pick(["I'm [her color] right now. Ghosts dress light, so I wear glow instead.", "[her color], head to wisp. It's a whole look."], 'room-mycolor');
+          if (/like your colou?r|want a new colou?r|new colou?r/.test(t)) return pick(["Love it. But I'm not loyal to a shade — tap me and we'll experiment.", "This one's a keeper. So was the last one. I'm easy to please in colors."], 'room-likecolor');
+          if (/rug.*colou?r|colou?r.*rug/.test(t)) return pick(["The rug's [rug color]. It grounds the room, which is ironic, since I'm the one who floats.", "[rug color]. Matches my glow on my better days."], 'room-rugcolor');
+          if (/walls?.*colou?r|colou?r.*walls?|wall paint/.test(t)) return pick(["[wall paint]. Every ghost home should have walls that match the mood.", "The walls are [wall paint]. I picked them the way I pick everything: confidently."], 'room-wallcolor');
+          if (/floor|wood floor/.test(t)) return pick(["[floor tone] floors. Fancy underfoot, even if my feet are decorative.", "[floor tone]. I never wear it out. I don't touch it."], 'room-floor');
+          if (/does it match|like your decor|what's your style|nice room/.test(t)) return pick(["[wall paint] walls, a [floor tone] floor, one glowing ghost. It matches because I say it matches.", "My style is 'cozy with confidence.' Goes with everything."], 'room-style');
+          /* window, view, day and night */
+          if (/moon|stars?/.test(t) && !/string/.test(t)) {
+            if (nightOn) return pick(["Moon's up there trading shifts with the sun. I wave. It never waves back. Very professional."], 'room-moon');
+            return pick(["Not right now. Moon's off shift till tonight."], 'room-moon');
+          }
+          if (/is it day|is it night|day or night|what time is it|dark in (there|here)/.test(t)) {
+            if (nightOn) return pick(["Night in here. Glow hours, my favorite.", "Dark out, lights low, ghost bright. Night mode suits me."], 'room-daynight');
+            return pick(["Daytime in here. The window's doing its bright thing."], 'room-daynight');
+          }
+          if (/like (the )?night|night or day|favorite time/.test(t)) {
+            var nl = ["Night's when I shine. Literally, there's a glow involved."];
+            if (inRoom('lights')) nl.push("Night plus string lights is my favorite look in the world.");
+            return pick(nl, 'room-nightlike');
+          }
+          if (/sky|sunset|sunrise|do you like the sun/.test(t)) return pick(["Every day the sky does a whole show over the lake. Front row, every time.", "I supervise the sunrise and the sunset. Both are doing great this year."], 'room-sky');
+          if (/outside|out the window|window|mountain|lake|view/.test(t)) {
+            if (/like|nice/.test(t)) return pick(["Love it. Some days the lake does a sparkle thing and I just hover there.", "It's my favorite channel. Never cancels, always on."], 'room-viewlike');
+            return pick(["Snowy mountains, a lake, and pine trees. Nature's screensaver, except it's real to me.", "Mountains and a lake. I never get tired of it, and I've had time to test that."], 'room-view');
+          }
+          /* what's in the room, and where things are */
+          if (/what's in your room|what do you have|tell me what's in/.test(t)) {
+            var pl = roomPlacedIds();
+            if (!pl.length) return pick(["Right now? A rug, a big window, and one excellent ghost. Furnishing is a journey."], 'room-inv');
+            if (pl.length === 6) return pick(["The full set: [item list]. Fully haunted, fully furnished."], 'room-inv');
+            return pick(["Let's see: [item list]. Plus the rug, the window, and me."], 'room-inv');
+          }
+          if (/furniture/.test(t)) {
+            var furnIds = roomPlacedIds().filter(function (id) { return id === 'chair' || id === 'shelf' || id === 'stool'; });
+            if (!furnIds.length) return pick(["Furniture-wise I'm running a minimalist operation. A rug and confidence."], 'room-furn');
+            var furnNames = furnIds.map(function (id) { return ITEM_DEFS[id].name; });
+            return roomFill(pickLine(["Furniture-wise: [item list]. Enough to host a very small, very classy haunting."], 'room-furn'), null, furnNames);
+          }
+          if (/how much stuff|how many things|count your things/.test(t)) {
+            var n = roomPlacedIds().length;
+            if (!n) return pick(["Zero furniture, infinite personality. We're working on the furniture."], 'room-count');
+            return pick(["[item count] of my favorite things in here, plus me. I'm not stuff, I'm staff."], 'room-count');
+          }
+          if (/room (looks|is) empty|why is it so empty|you need more stuff/.test(t)) {
+            if (!roomPlacedIds().length) return pick(["Minimalist era. The window and I are carrying the whole decor right now.", "Empty-ish, not unloved. Every home starts as a ghost and a rug."], 'room-empty');
+            return null;
+          }
+          var thingMatch = t.match(/\b(television|tv|couch|sofa|plant|bed|desk|table|lamp|fridge|computer)\b/);
+          if (thingMatch && /have|got|do you/.test(t)) return pickThing(["Nope, no [thing] in here. Home is cozy, not crowded.", "I don't have one of those. If it ever exists for ghosts, I'll hear about it."], 'room-nothave', thingMatch[1] === 'tv' ? 'TV' : thingMatch[1]);
+          /* how she feels in her home */
+          if (/comfy|comfortable/.test(t)) {
+            var cl = ["Ghost-level comfy. All the comfort, none of the blanket theft."];
+            if (inRoom('candle')) cl.push("Candle lit, lights soft, me floating. That's the comfy trifecta.");
+            return pick(cl, 'room-comfy');
+          }
+          if (/happy|like living here/.test(t)) return pick(["I am. It's my place, my things, and good company drops by. That's the recipe.", "Happy enough that my heart glows about it. You've seen the heart."], 'room-happy');
+          if (/lonely|alone/.test(t)) return pick(["A little, on the quiet days. Haunting solo is better with visitors.", "Ghosts don't mind quiet, but company beats it every time."], 'room-lonely');
+          if (/sleep|where do you sleep|ghosts sleep/.test(t)) return pick(["Ghosts don't sleep, we just dim. I dim right here at home.", "I rest wherever the floating stops. Usually mid-room, very dignified."], 'room-sleep');
+          if (/cold|warm in/.test(t)) {
+            var wl = ["Never cold. Built-in glow, all-weather ghost."];
+            if (inRoom('candle')) wl.push("Never. I've got a glow, and a candle doing backup warmth.");
+            return pick(wl, 'room-cold');
+          }
+          if (/bored|what do you do all day/.test(t)) {
+            var bl = ["Bored? I have a window, my things, and a very active imagination. I'm booked."];
+            if (inRoom('shelf')) bl.push("With a bookshelf? Never. Whole worlds, floating distance away.");
+            return pick(bl, 'room-bored');
+          }
+          /* where her home is */
+          if (/where do you live|where is your home|what town|where are we|place called|what is this place/.test(t)) {
+            if (currentHomeLoc) return pick(["My home's in [home location], as far as the weather's concerned. The window keeps its own geography.", "Home base: [home location]. The mountains are my own decoration.", "We're in [home location] — well, you are. I'm in my room, which is better."], 'room-loc');
+            return pick(["Here. Home. The town part is a mystery I never needed solved.", "Somewhere with mountains and a lake out the window. That's my whole address.", "This place is called home. Fanciest address I know."], 'room-loc');
+          }
+          /* her home in general */
+          if (/like your home|like your room|like it here|is this your home|you live here/.test(t)) return pick(["Love it here. It's small, it's mine, and the company's good.", "This is home. I picked the glow myself.", "I do. It's the only place I've ever haunted, and I picked well."], 'room-home');
+          if (/describe your home|room like|tell me about your place/.test(t)) {
+            if (roomPlacedIds().length) return pick(["One cozy room, a [floor tone] floor, and my favorite things all within floating distance."], 'room-desc');
+            return pick(["One room, big window, mountains outside, me inside. Simple and perfect."], 'room-desc');
+          }
+          if (/how big|is it small|small in there/.test(t) && /room|place/.test(t)) return pick(["Small enough that everything I love is within floating distance.", "One room, exactly ghost-sized."], 'room-size');
+          if (/favorite spot|where do you hang|where do you spend/.test(t)) {
+            if (inRoom('chair')) return pick(["My chair, no contest. Prime thinking territory."], 'room-spot');
+            if (nightOn && inRoom('lights')) return pick(["Under the string lights at night. Softest spot in the world."], 'room-spot');
+            return pick(["Right in front of the window. Best seat in the house, and I always get it."], 'room-spot');
+          }
+          if (/do you ever leave|live here all the time|where do you go/.test(t)) return pick(["I'm here pretty much always. Best part of the job.", "I live here full time. The commute is zero and I love it."], 'room-leave');
+          return null;
+        }
+        function deliverRoomScript(text) {
+          var line = roomScriptFor(text);
+          if (!line) return false;
+          lastExchangeAt = Date.now();
+          sndBoop();
+          perk();
+          wiggle();
+          express('surprised', 0.7);
+          var inConv = convActive;
+          if (inConv) { clearTimeout(convTimer); convTimer = null; }
+          if (inConv && convActive) {
+            say(line, REPLY_HOLD_MS);
+            scheduleLinger();
+            scheduleFollowUpListening(450);
+          } else {
+            say(line, 8000);
+          }
+          return true;
+        }
         /* Logged in, the words go to Relic's real brain on the
            server (see the account section below); logged out, the
            demo engine below answers, exactly as it always has. */
         function deliverMessage(text) {
+          if (deliverRoomScript(text)) return;
           if (authToken) { deliverServerMessage(text); return; }
           deliverDemoMessage(text);
         }
