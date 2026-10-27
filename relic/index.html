@@ -66,9 +66,13 @@
         background:
           url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.06 0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E"),
           radial-gradient(120% 90% at 50% 0%, var(--wall) 0%, var(--wall-shade) 100%);
-        padding: clamp(12px, 3vh, 26px) 10px;
-        min-height: 100vh;
-        min-height: 100dvh;
+        padding: clamp(12px, 3vh, 26px) 10px 6px;
+        /* 2026-10-27: no more full-screen wall section. With
+           min-height:100vh the panel sat at the top and the
+           message bar dropped to the bottom of the screen, with
+           a huge dark gap between glow and message bar. Now the
+           wall section is only as tall as the hub itself, so the
+           message bar follows right under the glow. */
         display: flex;
         flex-direction: column;
         align-items: stretch;
@@ -1573,11 +1577,11 @@
               express('happy', 1.8);
               closeAllTrays();
               if (!settingsPop.hidden) setSettingsOpen(false);
-              hideRotbar();
               if (id === 'fridge') showTray(trayFridge);
               else showTray(trayCountertop);
+              showRotbar(id);
             },
-            onCabinetTap: function () {
+            onCabinetTap: function (id) {
               /* Tap on a kitchen cabinet base (the white body under
                  a countertop) opens the kitchen white tray. */
               if (!booted) return;
@@ -1585,8 +1589,8 @@
               express('happy', 1.8);
               closeAllTrays();
               if (!settingsPop.hidden) setSettingsOpen(false);
-              hideRotbar();
               showTray(trayKitchenWhite);
+              if (id) showRotbar(id);
             },
             onFloorTap: function (x, z) {
               /* tap-to-move: a tap on open floor sends them gliding to
@@ -5725,8 +5729,13 @@
           function clampCounterPos(g, id) {
             var f = itemFoot[id];
             if (!f) return;
-            g.position.x = Math.max(-5 + f.hx + 0.01, Math.min(5 - f.hx - 0.01, g.position.x));
-            g.position.z = Math.max(-3.5 + f.hz + 0.01, Math.min(3.5 - f.hz - 0.01, g.position.z));
+            /* Rotated footprint, same as items: a counter turned
+               90 degrees is deep instead of long, and at 45 degrees
+               its corners sweep widest, so clamp by the turned box. */
+            var c = Math.abs(Math.cos(g.rotation.y)), s = Math.abs(Math.sin(g.rotation.y));
+            var ex = f.hx * c + f.hz * s, ez = f.hx * s + f.hz * c;
+            g.position.x = Math.max(-5 + ex + 0.01, Math.min(5 - ex - 0.01, g.position.x));
+            g.position.z = Math.max(-3.5 + ez + 0.01, Math.min(3.5 - ez - 0.01, g.position.z));
           }
           function clampItemPos(g, id) {
             var f = itemFoot[id];
@@ -5879,7 +5888,7 @@
                   }
                 } else if (cb.onRugTap) cb.onRugTap();
               }
-              else if (hit.kind === 'counter') { if (hit.isCabinet) { if (cb.onCabinetTap) cb.onCabinetTap(); } else if (cb.onCounterTap) cb.onCounterTap(hit.id); }
+              else if (hit.kind === 'counter') { if (hit.isCabinet) { if (cb.onCabinetTap) cb.onCabinetTap(hit.id); } else if (cb.onCounterTap) cb.onCounterTap(hit.id); }
               else if (hit.kind === 'wall') {
                 /* a wall tap sends them to the floor just in front of
                    the tapped spot: along the wall for the back wall,
@@ -6285,12 +6294,12 @@
                  step of the swing, so a piece parked against one wall
                  slides itself flat against the next instead of
                  sweeping a corner through the plaster. */
-              var g = id === 'rug' ? rugGroup : itemGroups[id];
+              var g = id === 'rug' ? rugGroup : (counterGroups[id] || itemGroups[id]);
               if (!g) return;
               var start = g.rotation.y, target = start + dir * Math.PI / 4;
               tween(0.35, function (k) {
                 g.rotation.y = start + (target - start) * k;
-                clampItemPos(g, id);
+                if (counterGroups[id]) clampCounterPos(g, id); else clampItemPos(g, id);
               }, function () {
                 /* the swing has settled (and any wall clamp with it):
                    the piece's new heading is ready to be recorded */
