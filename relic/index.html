@@ -70,7 +70,8 @@
         min-height: 100vh;
         min-height: 100dvh;
         display: flex;
-        align-items: center;
+        flex-direction: column;
+        align-items: stretch;
       }
       .hub-col {
         /* 2026-10-27, hub-size fix 2: the old height-tied width
@@ -83,7 +84,15 @@
            ALL devices: the hub column now simply fills its width
            up to 1180px, so panel, message bar, and shop buttons
            share the same width. */
-        width: min(1180px, 100%);
+        /* 2026-10-27, hub-size fix 3: wall-section is a flex row by
+           default, so a hub-col with width:100% could still shrink
+           as a flex item and leave the panel at ~60-75% width while
+           the message bar (outside wall-section) stayed full width.
+           Forcing flex: 1 0 100% (grow, no shrink, full basis) and
+           making wall-section a column fixes that at the source. */
+        width: 100%;
+        max-width: 1180px;
+        flex: 1 0 100%;
         margin: 0 auto;
       }
       .wall-lede {
@@ -109,8 +118,9 @@
       .frame-art svg { display: block; width: 100%; height: auto; }
       @media (max-width: 560px) { .frame-art { display: none; } }
 
-      .panel-unit { position: relative; z-index: 2; padding-top: 2px; }
+      .panel-unit { position: relative; z-index: 2; padding-top: 2px; width: 100%; }
       .panel {
+        width: 100%;
         background:
           url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.04 0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E"),
           linear-gradient(160deg, #fdfdfb, #e8e8e2);
