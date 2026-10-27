@@ -73,8 +73,17 @@
         align-items: center;
       }
       .hub-col {
-        width: min(1180px, 100%, calc((100vh - 276px) * 1.5385));
-        width: min(1180px, 100%, calc((100dvh - 276px) * 1.5385));
+        /* 2026-10-27, hub-size fix 2: the old height-tied width
+           (min(1180px, 100%, (100vh - 276px) * 1.5385)) shrank the
+           panel whenever the browser window reported a short height
+           — including a downloaded-file viewer reporting a viewport
+           wider than 700px, so the phone-only media query did not
+           save it, while the bottom buttons (full-width in the same
+           column) looked normal. The height formula is removed on
+           ALL devices: the hub column now simply fills its width
+           up to 1180px, so panel, message bar, and shop buttons
+           share the same width. */
+        width: min(1180px, 100%);
         margin: 0 auto;
       }
       .wall-lede {
@@ -224,6 +233,21 @@
         transition: opacity 0.2s ease, background 0.2s ease;
       }
       .gear-btn:hover, .gear-btn:focus-visible { opacity: 1; background: rgba(255, 255, 255, 0.12); }
+      /* Kitchen arrow — small, wide, white at 80% opacity: a wide-open
+         chevron, like a little alligator mouth, on the left of the
+         bedroom and flipped on the right in the kitchen. */
+      .place-arrow {
+        position: absolute; top: 50%; left: 2px; transform: translateY(-50%);
+        z-index: 7; width: 46px; height: 30px; padding: 0;
+        background: transparent; opacity: 0.8; border: none; border-radius: 0;
+        color: #ffffff; display: flex; align-items: center; justify-content: center;
+        cursor: pointer;
+      }
+      .place-arrow.flip { left: auto; right: 2px; }
+      .place-arrow:hover { opacity: 1; }
+      .place-arrow:active { transform: translateY(-50%) scale(0.94); }
+      .place-arrow svg { display: block; width: 34px; height: 22px; }
+      .place-arrow.flip svg { transform: scaleX(-1); }
       /* Hey button — the press-to-talk control at the bottom-left of
          the screen; it is the wake word as a button: pressing it
          brings them up close, mic light on, asking how they can help */
@@ -801,6 +825,9 @@
                 <div class="screen" id="screen">
                   <div id="gl" role="img" aria-label="A 3D room with light walls and a wood floor. A translucent 2D cartoon ghost floats and wanders around it on their own."></div>
                   <div class="gl-fallback" id="gl-fallback" hidden>The 3D room couldn't start on this device.</div>
+                  <button class="place-arrow" id="btn-place" aria-label="Go to the kitchen" title="Kitchen">
+                    <svg viewBox="0 0 34 22" aria-hidden="true"><path d="M30 2 L10 11 L30 20" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                  </button>
 
                   <div class="mic-dot" id="micdot"><span class="dot"></span>listening</div>
 
@@ -844,7 +871,7 @@
                       <input class="set-loc-input" id="set-loc" type="text" placeholder="City, State" autocomplete="off" maxlength="60" />
                       <div class="set-loc-note">So she knows the weather where you are.</div>
                     </div>
-                    <div class="set-colors">
+                    <div class="set-colors row-bedroom">
                       <div class="set-colors-label">Floor tone</div>
                       <div class="set-swatches" id="set-floor" role="group" aria-label="Pick the floor's wood tone">
                         <button class="swatch active" data-tone="#6b4a2d" style="background:#6b4a2d" aria-label="Dark oak"></button>
@@ -855,7 +882,7 @@
                         <button class="swatch" data-tone="#3d3227" style="background:#3d3227" aria-label="Ebony"></button>
                       </div>
                     </div>
-                    <div class="set-colors">
+                    <div class="set-colors row-bedroom">
                       <div class="set-colors-label">Wall paint</div>
                       <div class="set-swatches" id="set-wall" role="group" aria-label="Pick the wall paint color">
                         <button class="swatch active" data-paint="#ffe2c0" style="background:#ffe2c0" aria-label="Warm cream"></button>
@@ -864,6 +891,31 @@
                         <button class="swatch" data-paint="#f6cfc4" style="background:#f6cfc4" aria-label="Blush"></button>
                         <button class="swatch" data-paint="#ddd2f2" style="background:#ddd2f2" aria-label="Lilac"></button>
                         <button class="swatch" data-paint="#9aa1a8" style="background:#9aa1a8" aria-label="Slate"></button>
+                      </div>
+                    </div>
+
+
+
+                    <div class="set-colors row-kitchen">
+                      <div class="set-colors-label">Kitchen floor</div>
+                      <div class="set-swatches" id="set-kitchen-floor" role="group" aria-label="Pick the kitchen floor checker color">
+                        <button class="swatch active" data-kfloor="#191919" style="background:#191919" aria-label="Black"></button>
+                        <button class="swatch" data-kfloor="#262626" style="background:#262626" aria-label="Charcoal"></button>
+                        <button class="swatch" data-kfloor="#3d3227" style="background:#3d3227" aria-label="Espresso"></button>
+                        <button class="swatch" data-kfloor="#7d858c" style="background:#7d858c" aria-label="Grey"></button>
+                        <button class="swatch" data-kfloor="#4a2e1f" style="background:#4a2e1f" aria-label="Dark brown"></button>
+                        <button class="swatch" data-kfloor="#232a3a" style="background:#232a3a" aria-label="Navy"></button>
+                      </div>
+                    </div>
+                    <div class="set-colors row-kitchen">
+                      <div class="set-colors-label">Kitchen wall</div>
+                      <div class="set-swatches" id="set-kitchen-wall" role="group" aria-label="Pick the kitchen wall paint color">
+                        <button class="swatch active" data-kwall="#ffe2c0" style="background:#ffe2c0" aria-label="Warm cream"></button>
+                        <button class="swatch" data-kwall="#cfe0c0" style="background:#cfe0c0" aria-label="Sage"></button>
+                        <button class="swatch" data-kwall="#c3dcef" style="background:#c3dcef" aria-label="Powder blue"></button>
+                        <button class="swatch" data-kwall="#f6cfc4" style="background:#f6cfc4" aria-label="Blush"></button>
+                        <button class="swatch" data-kwall="#ddd2f2" style="background:#ddd2f2" aria-label="Lilac"></button>
+                        <button class="swatch" data-kwall="#9aa1a8" style="background:#9aa1a8" aria-label="Slate"></button>
                       </div>
                     </div>
                   </div>
@@ -903,6 +955,40 @@
                     <button class="swatch" data-c="#e6dfcf" style="background:#e6dfcf" aria-label="Painted cream"></button>
                     <button class="swatch" data-c="#2f7f76" style="background:#2f7f76" aria-label="Teal paint"></button>
                   </div>
+
+
+                  <div class="tray" id="tray-kitchen-white" role="group" aria-label="Pick the kitchen white color">
+                      <div class="set-swatches" id="set-kitchen-white" role="group" aria-label="Pick the kitchen white color">
+                        <button class="swatch active" data-white="#ffffff" style="background:#ffffff" aria-label="White"></button>
+                        <button class="swatch" data-white="#f6efe3" style="background:#f6efe3" aria-label="Cream"></button>
+                        <button class="swatch" data-white="#cfe0c0" style="background:#cfe0c0" aria-label="Sage"></button>
+                        <button class="swatch" data-white="#c3dcef" style="background:#c3dcef" aria-label="Powder blue"></button>
+                        <button class="swatch" data-white="#f6cfc4" style="background:#f6cfc4" aria-label="Blush"></button>
+                        <button class="swatch" data-white="#ddd2f2" style="background:#ddd2f2" aria-label="Lilac"></button>
+                      </div>
+                    </div>                  </div>
+
+                  <div class="tray" id="tray-fridge" role="group" aria-label="Pick the fridge color">
+                      <div class="set-swatches" id="set-fridge" role="group" aria-label="Pick the fridge color">
+                        <button class="swatch" data-fridge="#ffffff" style="background:#ffffff" aria-label="White"></button>
+                        <button class="swatch active" data-fridge="#b8bcc0" style="background:#b8bcc0" aria-label="Stainless"></button>
+                        <button class="swatch" data-fridge="#262626" style="background:#262626" aria-label="Black"></button>
+                        <button class="swatch" data-fridge="#f6efe3" style="background:#f6efe3" aria-label="Cream"></button>
+                        <button class="swatch" data-fridge="#c3dcef" style="background:#c3dcef" aria-label="Powder blue"></button>
+                        <button class="swatch" data-fridge="#cfe0c0" style="background:#cfe0c0" aria-label="Sage"></button>
+                      </div>
+                    </div>                  </div>
+
+                  <div class="tray" id="tray-countertop" role="group" aria-label="Pick the countertop color">
+                      <div class="set-swatches" id="set-countertop" role="group" aria-label="Pick the countertop color">
+                        <button class="swatch active" data-countertop="#8a5a33" style="background:#8a5a33" aria-label="Walnut"></button>
+                        <button class="swatch" data-countertop="#c98d4e" style="background:#c98d4e" aria-label="Butcher block"></button>
+                        <button class="swatch" data-countertop="#f5f2ea" style="background:#f5f2ea" aria-label="White"></button>
+                        <button class="swatch" data-countertop="#262626" style="background:#262626" aria-label="Black"></button>
+                        <button class="swatch" data-countertop="#8a8f94" style="background:#8a8f94" aria-label="Grey"></button>
+                        <button class="swatch" data-countertop="#cfe0c0" style="background:#cfe0c0" aria-label="Sage"></button>
+                      </div>
+                    </div>                  </div>
 
                   <button class="rot-btn" id="rot-btn" hidden aria-label="Rotate clockwise" title="Rotate clockwise">&#8635;</button>
 
@@ -1083,6 +1169,20 @@
                 <span class="shop-info"><span class="shop-name">Stool</span><span class="shop-price">Free <span class="per">· one-time</span></span></span>
                 <span class="shop-state">Add</span>
               </button>
+              <button class="shop-item" id="item-nightstand" aria-pressed="false">
+                <span class="shop-thumb" aria-hidden="true">
+                  <svg viewBox="0 0 64 64">
+                    <rect width="64" height="64" fill="#2b2440"/>
+                    <rect x="14" y="18" width="36" height="6" rx="2" fill="#a8845e"/>
+                    <rect x="16" y="24" width="32" height="20" rx="2" fill="#8a5a33"/>
+                    <rect x="28" y="31" width="8" height="5" rx="2" fill="#e2cbb2"/>
+                    <rect x="18" y="44" width="4" height="10" rx="2" fill="#7a4a2d"/>
+                    <rect x="42" y="44" width="4" height="10" rx="2" fill="#7a4a2d"/>
+                  </svg>
+                </span>
+                <span class="shop-info"><span class="shop-name">Nightstand</span><span class="shop-price">Free <span class="per">· one-time</span></span></span>
+                <span class="shop-state">Add</span>
+              </button>
             </div>
             <div class="cart-row" id="cart-row" hidden>
               <div class="cart-info">
@@ -1153,8 +1253,17 @@
         var trayChair = document.getElementById('tray-chair');
         var trayRug = document.getElementById('tray-rug');
         var trayShelf = document.getElementById('tray-shelf');
+        var trayKitchenWhite = document.getElementById('tray-kitchen-white');
+        var trayFridge = document.getElementById('tray-fridge');
+        var trayCountertop = document.getElementById('tray-countertop');
         var setFloor = document.getElementById('set-floor');
         var setWall = document.getElementById('set-wall');
+        var setKitchenWhite = document.getElementById('set-kitchen-white');
+        var setFridge = document.getElementById('set-fridge');
+        var setCountertop = document.getElementById('set-countertop');
+        var setKitchenFloor = document.getElementById('set-kitchen-floor');
+        var setKitchenWall = document.getElementById('set-kitchen-wall');
+        var btnPlace = document.getElementById('btn-place');
         var micdot = document.getElementById('micdot');
         var underglow = document.getElementById('underglow');
         var shopPop = document.getElementById('shop-pop');
@@ -1199,7 +1308,7 @@
            pattern everywhere: one open at a time, and each closes
            itself after a few seconds. */
         function hideTrays(except) {
-          [tray, trayChair, trayRug, trayShelf].forEach(function (t) {
+          [tray, trayChair, trayRug, trayShelf, trayKitchenWhite, trayFridge, trayCountertop].forEach(function (t) {
             if (t && t !== except) t.classList.remove('open');
           });
         }
@@ -1252,7 +1361,7 @@
            item is clicked again. A tap spent dismissing options is
            consumed by the dismissal: it never also moves the ghost. */
         function anyOptionsOpen() {
-          return tray.classList.contains('open') || trayChair.classList.contains('open') || trayRug.classList.contains('open') || trayShelf.classList.contains('open') || !rotBtn.hidden || !settingsPop.hidden || !shopPop.hidden || !plusPop.hidden || !checkoutPop.hidden || (typeof acctPop !== 'undefined' && acctPop && !acctPop.hidden);
+          return tray.classList.contains('open') || trayChair.classList.contains('open') || trayRug.classList.contains('open') || trayShelf.classList.contains('open') || trayKitchenWhite.classList.contains('open') || trayFridge.classList.contains('open') || trayCountertop.classList.contains('open') || !rotBtn.hidden || !settingsPop.hidden || !shopPop.hidden || !plusPop.hidden || !checkoutPop.hidden || (typeof acctPop !== 'undefined' && acctPop && !acctPop.hidden);
         }
         function closeAllOptions() {
           closeAllTrays();
@@ -1275,7 +1384,7 @@
         function showRotbar(id) {
           selectedItem = id;
           var anchor = null;
-          [tray, trayChair, trayRug, trayShelf].forEach(function (t) {
+          [tray, trayChair, trayRug, trayShelf, trayKitchenWhite, trayFridge, trayCountertop].forEach(function (t) {
             if (!anchor && t.classList.contains('open')) anchor = t;
           });
           if (anchor) anchor.appendChild(rotBtn);
@@ -1388,6 +1497,10 @@
             },
             onItemTap: function (id) {
               if (!booted) return;
+              /* Place scope, outer layer: a bedroom item tap in the
+                 kitchen must never open a tray, start a visit, or
+                 speak a visit line. */
+              if (room3d && room3d.getPlace && room3d.getPlace() === 'kitchen') return;
               sndBoop();
               express('happy', 1.8);
               /* tapping a different item closes whatever options the
@@ -1396,7 +1509,7 @@
               if (!settingsPop.hidden) setSettingsOpen(false);
               if (id === 'chair') showTray(trayChair);
               if (id === 'shelf') showTray(trayShelf);
-              if (id === 'chair' || id === 'shelf') { showRotbar(id); } else { hideRotbar(); }
+              if (id === 'chair' || id === 'shelf' || id === 'nightstand') { showRotbar(id); } else { hideRotbar(); }
               if (room3d) room3d.visit(id);
               /* opening a customization tray is silent: she only
                  speaks about the chair or the shelf AFTER a fabric
@@ -1415,12 +1528,42 @@
               if (id === 'chair' || id === 'stool') say("OooOoOoOo", 3600);
             },
             onRugTap: function () {
+              /* Rug is a bedroom piece only: in the kitchen it must
+                 never open the rug tray, even if a stray rug hit
+                 reaches this callback from an older code path. */
+              if (room3d && room3d.getPlace && room3d.getPlace() === 'kitchen') return;
               if (!booted) return;
               sndBoop();
               express('happy', 1.6);
               if (!settingsPop.hidden) setSettingsOpen(false);
               showTray(trayRug);
               showRotbar('rug');
+            },
+            onCounterTap: function (id) {
+              /* Tap (short press, no drag) on a kitchen piece opens
+                 its colour tray, following the chair/shelf pattern:
+                 fridge -> fridge tray, any counter/island top ->
+                 countertop tray. Dragging still moves the piece;
+                 this only runs on a tap, via the pointer-up path. */
+              if (!booted) return;
+              sndBoop();
+              express('happy', 1.8);
+              closeAllTrays();
+              if (!settingsPop.hidden) setSettingsOpen(false);
+              hideRotbar();
+              if (id === 'fridge') showTray(trayFridge);
+              else showTray(trayCountertop);
+            },
+            onCabinetTap: function () {
+              /* Tap on a kitchen cabinet base (the white body under
+                 a countertop) opens the kitchen white tray. */
+              if (!booted) return;
+              sndBoop();
+              express('happy', 1.8);
+              closeAllTrays();
+              if (!settingsPop.hidden) setSettingsOpen(false);
+              hideRotbar();
+              showTray(trayKitchenWhite);
             },
             onFloorTap: function (x, z) {
               /* tap-to-move: a tap on open floor sends them gliding to
@@ -1452,6 +1595,24 @@
               if (!booted) return;
               closeAllOptions();
             },
+            onPlaceChange: function (place) {
+              updatePlaceButton(place);
+              syncSettingsRows();
+              if (place === 'kitchen') { try { closeAllTrays(); hideRotbar(); } catch (e) {} }
+              /* arrival line, once per kitchen visit and at most
+                 once a minute: only when booted, only outside a
+                 conversation, so it never talks over Hey or a
+                 reply. Throttled so rapid arrow taps don't spam. */
+              try {
+                if (place === 'kitchen' && typeof booted !== 'undefined' && booted && (typeof convActive === 'undefined' || !convActive)) {
+                  var nowK = Date.now();
+                  if (!lastKitchenHelloAt || nowK - lastKitchenHelloAt > 60000) {
+                    lastKitchenHelloAt = nowK;
+                    say("Off to the kitchen. Checkered floor, middle window, island, fridge, all mine.", 5000);
+                  }
+                }
+              } catch (e) {}
+            },
             onItemMoved: function () {
               /* a drag ended or a rotate swing settled: the piece's
                  new spot belongs in the saved record (stateSnapshot
@@ -1462,6 +1623,20 @@
           });
         } catch (e) { room3d = null; }
         if (!room3d) { document.getElementById('gl-fallback').hidden = false; }
+        var lastKitchenHelloAt = 0;
+        function updatePlaceButton(place) {
+          if (!btnPlace) return;
+          var toKitchen = place !== 'kitchen';
+          btnPlace.classList.toggle('flip', !toKitchen);
+          btnPlace.setAttribute('aria-label', toKitchen ? 'Go to the kitchen' : 'Go back to the bedroom');
+          btnPlace.title = toKitchen ? 'Kitchen' : 'Bedroom';
+        }
+        if (btnPlace) btnPlace.addEventListener('click', function () {
+          if (!booted || !room3d || !room3d.getPlace || !room3d.setPlace) return;
+          sndBoop();
+          if (room3d.getPlace() === 'kitchen') room3d.setPlace('bedroom'); else room3d.setPlace('kitchen');
+        });
+        updatePlaceButton('bedroom');
 
         function perk() { if (room3d) room3d.perk(); }
         function wiggle() { if (room3d) room3d.wiggle(); }
@@ -1848,7 +2023,12 @@
                 trayEl.classList.remove('open');
                 clearTimeout(trayTimer);
                 hideRotbar();
-              } else if (trayEl === setFloor || trayEl === setWall) {
+              } else if (trayEl.parentElement && trayEl.parentElement.classList.contains('tray')) {
+                /* kitchen white / fridge / countertop now live in tap trays, not gear */
+                trayEl.parentElement.classList.remove('open');
+                clearTimeout(trayTimer);
+                hideRotbar();
+              } else if (trayEl === setFloor || trayEl === setWall || trayEl === setKitchenWhite || trayEl === setFridge || trayEl === setCountertop || trayEl === setKitchenFloor || trayEl === setKitchenWall) {
                 setSettingsOpen(false);
               }
             });
@@ -1880,6 +2060,31 @@
           if (room3d) room3d.setWallPaint(currentWallPaint);
           saveState();
         }, "Fresh paint. I supervised the whole thing.");
+        bindTraySwatches(setKitchenWhite, function (sw) {
+          currentKitchenWhite = sw.getAttribute('data-white');
+          if (room3d) room3d.setKitchenWhite(currentKitchenWhite);
+          saveState();
+        }, "New kitchen white. The checkerboard approves.");
+        bindTraySwatches(setFridge, function (sw) {
+          currentFridgeColor = sw.getAttribute('data-fridge');
+          if (room3d) room3d.setFridgeColor(currentFridgeColor);
+          saveState();
+        }, "New fridge color. Cold and stylish.");
+        bindTraySwatches(setCountertop, function (sw) {
+          currentCountertopColor = sw.getAttribute('data-countertop');
+          if (room3d) room3d.setCountertopColor(currentCountertopColor);
+          saveState();
+        }, "New countertops. Ready for cooking.");
+        bindTraySwatches(setKitchenFloor, function (sw) {
+          currentKitchenFloorColor = sw.getAttribute('data-kfloor');
+          if (room3d) room3d.setKitchenFloor(currentKitchenFloorColor);
+          saveState();
+        }, "New kitchen floor. The checkerboard approves.");
+        bindTraySwatches(setKitchenWall, function (sw) {
+          currentKitchenWallPaint = sw.getAttribute('data-kwall');
+          if (room3d) room3d.setWallForRoom('kitchen', currentKitchenWallPaint);
+          saveState();
+        }, "Fresh kitchen paint. I supervised the whole thing.");
 
         /* Room items */
         var visitLines = {
@@ -1888,7 +2093,8 @@
           shelf: "I've read this one four times. Still good.",
           pumpkin: "He's my favorite coworker. Very quiet.",
           candle: "Careful. I could watch this all night.",
-          stool: "Up it goes. Gravity is a suggestion."
+          stool: "Up it goes. Gravity is a suggestion.",
+          nightstand: "A little nightstand. Perfect for a candle, or a pumpkin, or both."
         };
         /* Shop items, the cart, and ownership.
            An unowned item's Add button no longer places it on the
@@ -1905,10 +2111,11 @@
           shelf: { name: 'Bookshelf', btn: 'item-shelf', price: 0.99 },
           pumpkin: { name: "Jack-o'-lantern", btn: 'item-pumpkin', price: 0 },
           candle: { name: 'Candle', btn: 'item-candle', price: 0 },
-          stool: { name: 'Stool', btn: 'item-stool', price: 0 }
+          stool: { name: 'Stool', btn: 'item-stool', price: 0 },
+          nightstand: { name: 'Nightstand', btn: 'item-nightstand', price: 0 }
         };
-        /* per-item prices: the pumpkin, the candle, and the stool
-           are FREE (Evan's call — free for newcomers), the rest
+        /* per-item prices: the pumpkin, the candle, the stool, and
+           the nightstand are FREE (Evan's call — free for newcomers), the rest
            are the usual 99c. Free items never see the cart or the
            checkout: one tap claims them (see bindShopItem). */
         function itemPrice(id) { return ITEM_DEFS[id] ? ITEM_DEFS[id].price : 0; }
@@ -1937,6 +2144,11 @@
         var DEFAULT_GHOST_C2 = '#17bfa5';
         var DEFAULT_FLOOR_TONE = '#6b4a2d';
         var DEFAULT_WALL_PAINT = '#ffe2c0';
+        var DEFAULT_KITCHEN_WHITE = '#ffffff';
+        var DEFAULT_FRIDGE_COLOR = '#b8bcc0';
+        var DEFAULT_COUNTERTOP_COLOR = '#8a5a33';
+        var DEFAULT_KITCHEN_FLOOR_COLOR = '#191919';
+        var DEFAULT_KITCHEN_WALL_PAINT = '#ffe2c0';
         var DEFAULT_CHAIR_M = '#c96f4a';
         var DEFAULT_CHAIR_C = '#e08e63';
         var DEFAULT_RUG_COLOR = '#8d8f94';
@@ -1945,6 +2157,11 @@
         var currentGhostC2 = DEFAULT_GHOST_C2;
         var currentFloorTone = DEFAULT_FLOOR_TONE;
         var currentWallPaint = DEFAULT_WALL_PAINT;
+        var currentKitchenWhite = DEFAULT_KITCHEN_WHITE;
+        var currentFridgeColor = DEFAULT_FRIDGE_COLOR;
+        var currentCountertopColor = DEFAULT_COUNTERTOP_COLOR;
+        var currentKitchenFloorColor = DEFAULT_KITCHEN_FLOOR_COLOR;
+        var currentKitchenWallPaint = DEFAULT_KITCHEN_WALL_PAINT;
         var currentChairM = DEFAULT_CHAIR_M;
         var currentChairC = DEFAULT_CHAIR_C;
         var currentRugColor = DEFAULT_RUG_COLOR;
@@ -1975,8 +2192,35 @@
         }
         function applyWallPaint(paint) {
           currentWallPaint = paint;
-          if (room3d) room3d.setWallPaint(paint);
+          if (room3d && room3d.setWallForRoom) room3d.setWallForRoom('bedroom', paint);
+          else if (room3d) room3d.setWallPaint(paint);
           markSwatchActive(setWall, 'data-paint', paint);
+        }
+        function applyKitchenWhite(hex) {
+          currentKitchenWhite = hex;
+          if (room3d) room3d.setKitchenWhite(hex);
+          markSwatchActive(setKitchenWhite, 'data-white', hex);
+        }
+        function applyFridgeColor(hex) {
+          currentFridgeColor = hex;
+          if (room3d) room3d.setFridgeColor(hex);
+          markSwatchActive(setFridge, 'data-fridge', hex);
+        }
+        function applyCountertopColor(hex) {
+          currentCountertopColor = hex;
+          if (room3d) room3d.setCountertopColor(hex);
+          markSwatchActive(setCountertop, 'data-countertop', hex);
+        }
+        function applyKitchenFloorColor(hex) {
+          currentKitchenFloorColor = hex;
+          if (room3d) room3d.setKitchenFloor(hex);
+          markSwatchActive(setKitchenFloor, 'data-kfloor', hex);
+        }
+        function applyKitchenWallPaint(hex) {
+          currentKitchenWallPaint = hex;
+          if (room3d && room3d.setWallForRoom) room3d.setWallForRoom('kitchen', hex);
+          else if (room3d && room3d.getPlace && room3d.getPlace() === 'kitchen') room3d.setWallPaint(hex);
+          markSwatchActive(setKitchenWall, 'data-kwall', hex);
         }
         function applyChairColor(m, c) {
           currentChairM = m;
@@ -2007,7 +2251,7 @@
           if (!blob || typeof blob !== 'object') return false;
           return ('plus' in blob) || ('owned' in blob) || ('placed' in blob) || ('cart' in blob) ||
             ('ghostC1' in blob) || ('ghostC2' in blob) || ('floorTone' in blob) || ('wallPaint' in blob) ||
-            ('chairM' in blob) || ('chairC' in blob) || ('rugColor' in blob) || ('shelfColor' in blob) ||
+            ('chairM' in blob) || ('chairC' in blob) || ('rugColor' in blob) || ('shelfColor' in blob) || ('kitchenWhite' in blob) || ('fridgeColor' in blob) || ('countertopColor' in blob) || ('kitchenFloorColor' in blob) || ('kitchenWallPaint' in blob) || ('placeOn' in blob) ||
             ('pos' in blob) || ('homeLoc' in blob);
         }
         /* Where every placed piece currently sits, pulled live from
@@ -2034,6 +2278,10 @@
             if (placedItems[id]) grab(id);
           });
           grab('rug');
+          /* kitchen counters are built-ins, not shop items, but their
+             dragged spots ride in the same pos record so they survive
+             a reload; old records simply have no counter keys */
+          ['counterL', 'counterR', 'island', 'fridge'].forEach(function (id) { grab(id); });
           return pos;
         }
         function stateSnapshot() {
@@ -2057,8 +2305,14 @@
             chairC: currentChairC,
             rugColor: currentRugColor,
             shelfColor: currentShelfColor,
+            kitchenWhite: currentKitchenWhite,
+            fridgeColor: currentFridgeColor,
+            countertopColor: currentCountertopColor,
+            kitchenFloorColor: currentKitchenFloorColor,
+            kitchenWallPaint: currentKitchenWallPaint,
             homeLoc: currentHomeLoc,
-            pos: collectPositions()
+            pos: collectPositions(),
+            placeOn: (room3d && room3d.getPlacements) ? room3d.getPlacements() : {}
           };
         }
         function writeLocalState() {
@@ -2160,6 +2414,7 @@
         bindShopItem('pumpkin', "Fall pack installed. He looks great, right?", "Pumpkin packed away till next fall.");
         bindShopItem('candle', "A candle! Watch it flicker.", "Candle away. Less cozy now.");
         bindShopItem('stool', "A stool! It floats like the chair.", "Stool's gone.");
+        bindShopItem('nightstand', "A little nightstand, free. Put a candle or a pumpkin on top.", "Nightstand packed away.");
 
         /* The purple Shop button and its listing — the button sits
            under the message bar and the listing opens right below
@@ -2392,6 +2647,11 @@
           );
           applyFloorTone((s && typeof s.floorTone === 'string' && s.floorTone) ? s.floorTone : DEFAULT_FLOOR_TONE);
           applyWallPaint((s && typeof s.wallPaint === 'string' && s.wallPaint) ? s.wallPaint : DEFAULT_WALL_PAINT);
+          applyKitchenWhite((s && typeof s.kitchenWhite === 'string' && s.kitchenWhite) ? s.kitchenWhite : DEFAULT_KITCHEN_WHITE);
+          applyFridgeColor((s && typeof s.fridgeColor === 'string' && s.fridgeColor) ? s.fridgeColor : DEFAULT_FRIDGE_COLOR);
+          applyCountertopColor((s && typeof s.countertopColor === 'string' && s.countertopColor) ? s.countertopColor : DEFAULT_COUNTERTOP_COLOR);
+          applyKitchenFloorColor((s && typeof s.kitchenFloorColor === 'string' && s.kitchenFloorColor) ? s.kitchenFloorColor : DEFAULT_KITCHEN_FLOOR_COLOR);
+          applyKitchenWallPaint((s && typeof s.kitchenWallPaint === 'string' && s.kitchenWallPaint) ? s.kitchenWallPaint : DEFAULT_KITCHEN_WALL_PAINT);
           applyChairColor(
             (s && typeof s.chairM === 'string' && s.chairM) ? s.chairM : DEFAULT_CHAIR_M,
             (s && typeof s.chairC === 'string' && s.chairC) ? s.chairC : DEFAULT_CHAIR_C
@@ -2420,6 +2680,19 @@
           });
           /* the rug's saved spot, whenever the record carries one */
           if (room3d && s && s.pos && s.pos.rug && room3d.setItemTransform) room3d.setItemTransform('rug', s.pos.rug);
+          /* kitchen counter spots, then pumpkin/candle surface spots:
+             placements are applied last so they land on the nightstand
+             or sill at their final, restored positions */
+          if (room3d && s && s.pos) {
+            ['counterL', 'counterR', 'island', 'fridge'].forEach(function (id) {
+              if (s.pos[id] && room3d.setItemTransform) room3d.setItemTransform(id, s.pos[id]);
+            });
+          }
+          if (room3d && s && s.placeOn && room3d.setPlacement) {
+            ['pumpkin', 'candle'].forEach(function (id) {
+              if (s.placeOn[id] && placedItems[id]) room3d.setPlacement(id, s.placeOn[id]);
+            });
+          }
           renderCartRow();
           applyPlusUI();
         }
@@ -2441,10 +2714,27 @@
           setNightRow.querySelector('.set-state').textContent = nightOn ? 'On' : 'Off';
           setNightRow.setAttribute('aria-pressed', nightOn ? 'true' : 'false');
         }
+        /* Room-aware gear, floor/wall only: the settings popover
+           shows only floor and wall rows for the room she is in.
+           Bedroom rows (floor tone, wall paint) hide in the kitchen;
+           kitchen rows (kitchen floor, kitchen wall) hide in the
+           bedroom. Kitchen white, fridge, and countertop are NOT in
+           gear any more: they are tap trays on the objects themselves
+           (see onCounterTap / onCabinetTap). Neutral rows (sound,
+           night, voice, home location) always show. Re-run on every
+           place change while the popover is open, so it follows her. */
+        function syncSettingsRows() {
+          var place = 'bedroom';
+          try { if (typeof room3d !== 'undefined' && room3d && room3d.getPlace) place = room3d.getPlace(); } catch (e) {}
+          var inKitchen = place === 'kitchen';
+          document.querySelectorAll('.set-colors.row-bedroom').forEach(function (el) { el.hidden = inKitchen; });
+          document.querySelectorAll('.set-colors.row-kitchen').forEach(function (el) { el.hidden = !inKitchen; });
+        }
         function setSettingsOpen(open) {
           settingsPop.hidden = !open;
           gearBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
           if (open) syncSettings();
+          if (open) syncSettingsRows();
         }
         gearBtn.addEventListener('click', function (ev) {
           ev.stopPropagation();
@@ -2473,7 +2763,7 @@
           var t = ev.target;
           var glWrap = document.getElementById('gl');
           if (glWrap && glWrap.contains(t)) return;
-          if (tray.contains(t) || trayChair.contains(t) || trayRug.contains(t) || trayShelf.contains(t) || rotBtn.contains(t) || shopPop.contains(t) || plusPop.contains(t) || checkoutPop.contains(t) || (acctPop && acctPop.contains(t))) return;
+          if (tray.contains(t) || trayChair.contains(t) || trayRug.contains(t) || trayShelf.contains(t) || trayKitchenWhite.contains(t) || trayFridge.contains(t) || trayCountertop.contains(t) || rotBtn.contains(t) || shopPop.contains(t) || plusPop.contains(t) || checkoutPop.contains(t) || (acctPop && acctPop.contains(t))) return;
           closeAllOptions();
         });
         document.addEventListener('keydown', function (ev) { if (ev.key === 'Escape') closeAllOptions(); });
@@ -2720,6 +3010,29 @@
           var inRoom = function (id) { return !!placedItems[id]; };
           var pick = function (v, k) { return roomFill(pickLine(v, k)); };
           var pickThing = function (v, k, thing) { return roomFill(pickLine(v, k), thing); };
+          /* ---- kitchen, place-aware ----
+             room3d may be null (3D failed) — then treat her as
+             in the bedroom, never as in the kitchen. This block
+             runs before the old "future rooms" branch, so a
+             kitchen that now exists is never again described
+             as a dream for someday. */
+          var scriptPlace = 'bedroom';
+          try { if (typeof room3d !== 'undefined' && room3d && room3d.getPlace) scriptPlace = room3d.getPlace(); } catch (e) {}
+          var scriptInKitchen = scriptPlace === 'kitchen';
+          if (/kitchen/.test(t)) {
+            /* 1. "are you in the kitchen?" — must win over any
+               generic kitchen talk, and must be true to place. */
+            if (/are you|you in|where are you/.test(t)) {
+              if (scriptInKitchen) return pick(["Yes, I'm in the kitchen right now. Come float by the island with me.", "Yep, right here in the kitchen, hovering by the island."], 'room-kitchen-here');
+              return pick(["No, I'm not in the kitchen right now. I'm in my room.", "Nope, not in the kitchen at the moment. I'm floating around my room."], 'room-kitchen-not-here');
+            }
+            if (/do you have|have you got|is there a|got a/.test(t)) {
+              if (scriptInKitchen) return pick(["Yes, and I'm in it right now. Checkered floor, middle window, island, fridge, the works.", "I do, and I'm standing in it. Well, floating in it."], 'room-kitchen-have');
+              return pick(["Yes, I have a kitchen. I'm in my room right now, but it's just past the little arrow on the left.", "I do. My kitchen is just through the arrow, but I'm in my room at the moment."], 'room-kitchen-have');
+            }
+            if (scriptInKitchen) return pick(["I love it in here. Black and white checkered floor, the window right in the middle, and my little island to float around.", "This kitchen is a good spot. The fridge hums, the counters are clear, and the light from the window makes everything bright.", "Floating around the island is my favourite kitchen job. The checkered floor makes the whole place feel like home.", "The window in the middle is the best part. I can see out while I hover by the island."], 'room-kitchen-in');
+            return pick(["My kitchen has a black and white checkered floor, a window in the middle, a little island, and a fridge. I'm in my room right now, though, not in there.", "I love my kitchen, especially the island and the checkered floor, but I'm floating around my room at the moment.", "The kitchen is just past the little arrow. Checkered floor, middle window, island, fridge, all waiting for me."], 'room-kitchen-out');
+          }
           /* cross-item questions */
           if (/newest|last thing you got|how long.*had/.test(t)) return pick(["Ghost memory for furniture dates is fuzzy. It's all 'already home' to me now.", "No idea what order things arrived in. They show up, I love them, timeline over."], 'room-newest');
           if (/keep only one|only save one|desert island/.test(t)) {
@@ -2828,6 +3141,13 @@
           if (/room (looks|is) empty|why is it so empty|you need more stuff/.test(t)) {
             if (!roomPlacedIds().length) return pick(["Minimalist era. The window and I are carrying the whole decor right now.", "Empty-ish, not unloved. Every home starts as a ghost and a rug."], 'room-empty');
             return null;
+          }
+          /* fridge, place-aware — before the generic
+             "no [thing] in here" fallback, which would wrongly
+             deny a fridge that lives in the kitchen. */
+          if (/fridge/.test(t) && /have|got|do you|where|like|love|colou?r|what|tell|about|is there/.test(t)) {
+            if (scriptInKitchen) return pick(["The fridge is right here in the kitchen with me. It hums, I glow, we get along.", "Right here. Big, cold, and very well behaved."], 'room-fridge-in');
+            return pick(["My fridge lives in the kitchen, not in my room. I'm in my room right now.", "The fridge is in my kitchen, just past the little arrow. I'm not in there at the moment."], 'room-fridge-out');
           }
           var thingMatch = t.match(/\b(television|tv|couch|sofa|plant|bed|desk|table|lamp|fridge|computer)\b/);
           if (thingMatch && /have|got|do you/.test(t)) return pickThing(["Nope, no [thing] in here. Home is cozy, not crowded.", "I don't have one of those. If it ever exists for ghosts, I'll hear about it."], 'room-nothave', thingMatch[1] === 'tv' ? 'TV' : thingMatch[1]);
@@ -4156,6 +4476,36 @@
           });
           var sill = new THREE.Mesh(new THREE.BoxGeometry(3.8, 0.1, 0.3), frameMat);
           sill.position.set(0, -1.92, 0.05); winGroup.add(sill);
+          /* window depth, still 2D: a flat painted pine foreground
+             in front of the flat painted sky, so the window reads
+             as layered rather than one flat picture. The sill items
+             sit in front of both. No 3D scenery model is used. */
+          var pineLayer = (function () {
+            var cv = cnv(512, 192), g = cv.getContext('2d');
+            g.clearRect(0, 0, 512, 192);
+            function pine(px, base, h) {
+              g.fillStyle = '#1e3524';
+              g.fillRect(px - 2, base - h * 0.16, 4, h * 0.16);
+              for (var t = 0; t < 3; t++) {
+                var tw = h * 0.62 * (1 - t * 0.24);
+                var ty0 = base - h * 0.10 - t * h * 0.27;
+                g.beginPath();
+                g.moveTo(px - tw / 2, ty0);
+                g.lineTo(px + tw / 2, ty0);
+                g.lineTo(px, ty0 - h * 0.38);
+                g.closePath(); g.fill();
+              }
+            }
+            for (var px = 4; px < 512; px += 22) pine(px, 192, 70 + ((px * 37) % 50));
+            var tex = new THREE.CanvasTexture(cv);
+            tex.encoding = THREE.sRGBEncoding;
+            var m = new THREE.Mesh(new THREE.PlaneGeometry(3.18, 1.2),
+              new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false }));
+            m.position.set(0, -1.1, 0.11);
+            m.renderOrder = 2;
+            return m;
+          })();
+          winGroup.add(pineLayer);
           scene.add(winGroup);
 
           /* a soft shaft of window light, and the warm pool where it lands */
@@ -4186,7 +4536,7 @@
           var bobGroup = new THREE.Group();     /* bob, hop, spin, wiggle */
           ghostGroup.add(bobGroup);
           scene.add(ghostGroup);
-          ghostGroup.position.set(0, 0.7, 0.4);
+          ghostGroup.position.set(0, 0.43, 0.4);
 
           /* they glow, so their light actually falls on the room around them —
              same design, but lit like they're really in the space */
@@ -4703,7 +5053,27 @@
             stoolGroup.add(ring);
           })();
 
-          var itemGroups = { lights: lightsGroup, chair: chairGroup, shelf: shelfGroup, pumpkin: pumpkinGroup, candle: candleGroup, stool: stoolGroup };
+          /* nightstand — a little bedroom table, FREE, with a top
+             the pumpkin and candle can sit on. Default spot is
+             against the left wall, clear of the chair. */
+          var nightstandGroup = new THREE.Group();
+          nightstandGroup.position.set(-4.2, 0, -1.2);
+          (function buildNightstand() {
+            var wood = woodMat(1, 1, 0x8a5a33);
+            var top = box(1.43, 0.07, 1.05, wood, 0, 0.97, 0);
+            nightstandGroup.add(top);
+            nightstandGroup.add(box(1.28, 0.75, 0.9, wood, 0, 0.555, 0));
+            nightstandGroup.add(box(1.05, 0.45, 0.03, woodMat(1, 1, 0x6e4525), 0, 0.6, 0.46));
+            var knob = new THREE.Mesh(new THREE.SphereGeometry(0.06, 10, 8), std(0xe2cbb2, 0.5));
+            knob.position.set(0, 0.6, 0.49); nightstandGroup.add(knob);
+            [[-0.6, -0.42], [0.6, -0.42], [-0.6, 0.42], [0.6, 0.42]].forEach(function (pp) {
+              var leg = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.18, 8), wood);
+              leg.position.set(pp[0], 0.09, pp[1]); leg.castShadow = true;
+              nightstandGroup.add(leg);
+            });
+          })();
+
+          var itemGroups = { lights: lightsGroup, chair: chairGroup, shelf: shelfGroup, pumpkin: pumpkinGroup, candle: candleGroup, stool: stoolGroup, nightstand: nightstandGroup };
           Object.keys(itemGroups).forEach(function (id) {
             var g = itemGroups[id];
             g.visible = false;
@@ -4712,11 +5082,235 @@
             scene.add(g);
           });
 
+          /* ---- kitchen ---- */
+          /* A second place alongside the bedroom: a black-and-white
+             checkered floor, white cabinets framing the existing
+             centre window (the window itself is untouched), and a
+             small island in the middle. The white in the checker
+             and the cabinets is one customizable pick, default white. */
+          var kitchenWhiteHex = '#ffffff';
+          var kitchenFloorHex = '#191919';
+          var kitchenWhiteMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.7 });
+          /* deliberately NOT regColor-registered: the night blend
+             loop rewrites registered colours every frame, which
+             would erase a picked kitchen white at once */
+          function checkerMaps(whiteHex, darkHex) {
+            var S = 256, cv = cnv(S, S), g = cv.getContext('2d');
+            var sq = S / 8, rx, ry, li;
+            for (ry = 0; ry < 8; ry++) {
+              for (rx = 0; rx < 8; rx++) {
+                g.fillStyle = ((rx + ry) % 2 === 0) ? whiteHex : (darkHex || '#191919');
+                g.fillRect(rx * sq, ry * sq, sq, sq);
+              }
+            }
+            g.strokeStyle = 'rgba(0,0,0,0.25)'; g.lineWidth = 2;
+            for (li = 0; li <= 8; li++) {
+              g.beginPath(); g.moveTo(li * sq, 0); g.lineTo(li * sq, S); g.stroke();
+              g.beginPath(); g.moveTo(0, li * sq); g.lineTo(S, li * sq); g.stroke();
+            }
+            return ctex(cv, 2.5, 1.75, true);
+          }
+          var kitchenFloorMat = new THREE.MeshStandardMaterial({ map: checkerMaps('#ffffff'), roughness: 0.8 });
+          regColor(kitchenFloorMat, 0xffffff, 0x59637e);
+          var kitchenGroup = new THREE.Group();
+          var kitchenFloor = new THREE.Mesh(new THREE.PlaneGeometry(10, 7), kitchenFloorMat);
+          kitchenFloor.rotation.x = -Math.PI / 2;
+          kitchenFloor.position.y = 0.015;
+          kitchenFloor.receiveShadow = true;
+          kitchenGroup.add(kitchenFloor);
+          var kitchenCounterTopMat = woodMat(1, 1, 0x8a5a33);
+          /* fridge: deliberately NOT regColor-registered, like
+             kitchenWhiteMat, so a picked colour is not rewritten
+             by the night blend every frame */
+          var fridgeMat = new THREE.MeshStandardMaterial({ color: 0xb8bcc0, roughness: 0.45, metalness: 0.35 });
+          var fridgeGroup = new THREE.Group();
+          fridgeGroup.position.set(-4.35, 0, 1.8);
+          (function buildFridge() {
+            var handleMat = std(0x555555, 0.4);
+            fridgeGroup.add(box(1.12, 2.24, 0.94, fridgeMat, 0, 1.12, 0));
+            fridgeGroup.add(box(1.03, 0.65, 0.02, fridgeMat, 0, 1.86, 0.48));
+            fridgeGroup.add(box(1.03, 1.08, 0.02, fridgeMat, 0, 0.92, 0.48));
+            fridgeGroup.add(box(1.03, 0.03, 0.02, std(0x333333, 0.6), 0, 1.51, 0.48));
+            fridgeGroup.add(box(0.05, 0.41, 0.05, handleMat, 0.38, 1.86, 0.53));
+            fridgeGroup.add(box(0.05, 0.65, 0.05, handleMat, 0.38, 1.0, 0.53));
+          })();
+          kitchenGroup.add(fridgeGroup);
+          /* fridge is draggable in the kitchen, like the counters:
+             its group is registered below, once counterGroups exists */
+          fridgeGroup.traverse(function (o) { o.userData.counterId = 'fridge'; });
+          /* counters as named groups, so they can be dragged in
+             the kitchen like furniture. Kitchen built-ins are
+             automatic — no shop purchase — only their positions move. */
+          var counterGroups = {};
+          counterGroups.fridge = fridgeGroup;
+          function buildCounter(id, x, z, w, d, withSink) {
+            var g = new THREE.Group();
+            g.position.set(x, 0, z);
+            var cabinetBase = box(w, 1.02, d, kitchenWhiteMat, 0, 0.51, 0);
+            cabinetBase.userData.isCabinet = true;
+            g.add(cabinetBase);
+            g.add(box(w + 0.08, 0.08, d + 0.08, kitchenCounterTopMat, 0, 1.06, 0));
+            if (withSink) {
+              /* sink, left counter only, riding with its counter:
+                 a dark basin set into the top plus a simple faucet.
+                 Basin/faucet use their own materials, so countertop
+                 colour changes never recolour the sink. Enlarged
+                 with the counter so it stays centred in the top. */
+              g.add(box(1.18, 0.06, 0.53, std(0x3a3f44, 0.6), 0, 1.09, 0));
+              var faucet = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.36, 10), std(0x9aa0a6, 0.5));
+              faucet.position.set(0, 1.26, -0.22); g.add(faucet);
+              g.add(box(0.05, 0.05, 0.3, std(0x9aa0a6, 0.5), 0, 1.42, -0.08));
+            }
+            g.traverse(function (o) { o.userData.counterId = id; });
+            counterGroups[id] = g;
+            kitchenGroup.add(g);
+            return g;
+          }
+          buildCounter('counterL', -3.45, -3.10, 3.3, 0.70, true);
+          buildCounter('counterR', 3.45, -3.10, 3.3, 0.70);
+          buildCounter('island', 0, 0.95, 2.2, 1.10);
+          kitchenGroup.visible = false;
+          scene.add(kitchenGroup);
+          var currentPlace = 'bedroom';
+          /* No autonomous room trips: she never switches rooms on
+             her own. Rooms change ONLY by tapping the place arrow
+             (travelToPlace), which still glides via the arrow spot. */
+          /* Walls are shared geometry, so each room keeps its own
+             saved paint and the walls are recoloured on every place
+             change: bedroom wallPaint in the bedroom, kitchenWallPaint
+             in the kitchen. Defaults match the bedroom default, so
+             nothing looks different until a kitchen wall is picked. */
+          var wallBedroomHex = '#ffe2c0';
+          var wallKitchenHex = '#ffe2c0';
+          function applyWallPaintInternal(hex) {
+            var base = srgbLin(hex);
+            var moon = srgbLin(0x8fa3cc);
+            function paint(mat, dayC) {
+              var e = mat.userData.ci;
+              if (!e) return;
+              e.d.copy(dayC);
+              e.n.copy(dayC).lerp(moon, 0.35).multiplyScalar(0.42);
+            }
+            paint(wallMat, base);
+            paint(sideMat, base.clone().multiplyScalar(0.9));
+            paint(ceilMat, base.clone().lerp(new THREE.Color(1, 1, 1), 0.3));
+          }
+          function setWallForRoomInternal(place, hex) {
+            if (!hex) return;
+            if (place === 'kitchen') wallKitchenHex = hex; else wallBedroomHex = hex;
+            if (place === currentPlace) applyWallPaintInternal(hex);
+          }
+          function setPlaceInternal(place) {
+            if (place !== 'kitchen' && place !== 'bedroom') return;
+            if (approachActive) cancelApproach();
+            currentPlace = place;
+            applyWallPaintInternal(place === 'kitchen' ? wallKitchenHex : wallBedroomHex);
+            var inKitchen = place === 'kitchen';
+            kitchenGroup.visible = inKitchen;
+            rugGroup.visible = !inKitchen;
+            Object.keys(itemGroups).forEach(function (id) {
+              itemGroups[id].visible = inKitchen ? false : !!owned[id];
+            });
+            ghostState.mode = 'idle';
+            ghostState.actItem = null;
+            ghostState.onArrive = null;
+            ghostState.pauseT = 1.2;
+            if (cb && cb.onPlaceChange) cb.onPlaceChange(place);
+          }
+          /* place travel via the arrow: glide to the arrow spot on
+             the side she is leaving, switch places, then glide to
+             the arrow spot in the new room, so she stays close to
+             the arrow instead of teleporting from mid-room. Bedroom
+             arrow is the left edge (x -4.2), kitchen arrow the right
+             edge (x 4.2). Ignored while a travel is already running;
+             an approach is cancelled first, as setPlaceInternal does. */
+          var placeTravelling = false;
+          function travelToPlace(place) {
+            if (place !== 'kitchen' && place !== 'bedroom') return;
+            if (place === currentPlace || placeTravelling) return;
+            if (approachActive) cancelApproach();
+            placeTravelling = true;
+            var departX = currentPlace === 'kitchen' ? 4.2 : -4.2;
+            var arriveX = place === 'kitchen' ? 4.2 : -4.2;
+            goTo(new THREE.Vector3(departX, 0.43, 0), function () {
+              setPlaceInternal(place);
+              goTo(new THREE.Vector3(arriveX, 0.43, 0), function () {
+                placeTravelling = false;
+                ghostState.mode = 'idle';
+                ghostState.pauseT = 2;
+              });
+            });
+          }
+          function setKitchenWhiteInternal(hex) {
+            if (!hex) return;
+            kitchenWhiteHex = hex;
+            kitchenWhiteMat.color.set(hex);
+            if (kitchenFloorMat.map) kitchenFloorMat.map.dispose();
+            kitchenFloorMat.map = checkerMaps(hex, kitchenFloorHex);
+            kitchenFloorMat.needsUpdate = true;
+          }
+          function setKitchenFloorInternal(hex) {
+            if (!hex) return;
+            kitchenFloorHex = hex;
+            if (kitchenFloorMat.map) kitchenFloorMat.map.dispose();
+            kitchenFloorMat.map = checkerMaps(kitchenWhiteHex, hex);
+            kitchenFloorMat.needsUpdate = true;
+          }
+          function setFridgeColorInternal(hex) {
+            if (!hex) return;
+            fridgeMat.color.set(hex);
+          }
+          function setCountertopColorInternal(hex) {
+            if (!hex) return;
+            kitchenCounterTopMat.color.set(hex);
+          }
+
+          /* ---- surface placement: pumpkin / candle on the
+             nightstand or the window sill ----
+             placement is 'floor' (normal), 'nightstand', or 'sill'.
+             The group y is the surface height; x/z are the surface
+             centre (with a small offset when both share one surface).
+             Dragging an item near a surface snaps it there on drop;
+             dragging it anywhere else drops it back to the floor. */
+          var placements = { pumpkin: 'floor', candle: 'floor' };
+          function surfacePos(id, place, dropX) {
+            var other = id === 'pumpkin' ? 'candle' : 'pumpkin';
+            var both = placements[other] === place && place !== 'floor';
+            if (place === 'nightstand') {
+              var nx = nightstandGroup.position.x, nz = nightstandGroup.position.z;
+              return { x: nx + (both ? (id === 'pumpkin' ? -0.42 : 0.42) : 0), y: 1.01, z: nz };
+            }
+            if (place === 'sill') {
+              var sx = Math.max(-1.3, Math.min(1.3, (typeof dropX === 'number' ? dropX : 0)));
+              if (both) sx = id === 'pumpkin' ? Math.min(sx, -0.35) : Math.max(sx, 0.35);
+              return { x: sx, y: 1.43, z: -3.32 };
+            }
+            return null;
+          }
+          function setPlacementInternal(id, place, dropX, dropZ) {
+            var g = itemGroups[id];
+            if (!g || (id !== 'pumpkin' && id !== 'candle')) return;
+            placements[id] = place;
+            if (place === 'floor') {
+              g.position.y = 0;
+              if (typeof dropX === 'number') g.position.x = dropX;
+              if (typeof dropZ === 'number') g.position.z = dropZ;
+              return;
+            }
+            var sp = surfacePos(id, place, dropX);
+            if (sp) { g.position.x = sp.x; g.position.y = sp.y; g.position.z = sp.z; }
+          }
+          function refreshNightstandPlacements() {
+            ['pumpkin', 'candle'].forEach(function (id) {
+              if (placements[id] === 'nightstand') setPlacementInternal(id, 'nightstand');
+            });
+          }
+
           /* ---- ghost behavior ---- */
           var owned = {};
           var ghostState = {
             mode: 'idle', pauseT: 1.2,
-            target: new THREE.Vector3(0, 0.7, 0.4),
+            target: new THREE.Vector3(0, 0.43, 0.4),
             onArrive: null, actItem: null, actT: 0,
             rotY: 0, targetRotY: 0,
             hopY: 0, faceBoost: 0, twinkle: 0
@@ -4745,27 +5339,43 @@
                  of the piece her body hides the float entirely
                  (Evan caught this on the stool). */
               var sideC = p.x <= 0 ? 1.45 : -1.45;
-              return { spot: new THREE.Vector3(p.x + sideC, 0.62, p.z + 0.3), anchor: new THREE.Vector3(p.x, 0.8, p.z), dur: 5.0 };
+              return { spot: new THREE.Vector3(p.x + sideC, 0.35, p.z + 0.3), anchor: new THREE.Vector3(p.x, 0.8, p.z), dur: 5.0 };
             }
             if (id === 'shelf') {
               p = shelfGroup.position;
               so = rotOff(shelfGroup, 0, 1.27);
-              return { spot: new THREE.Vector3(p.x + so.x, 1.0, p.z + so.z), anchor: new THREE.Vector3(p.x, 1.5, p.z), dur: 5.0 };
+              return { spot: new THREE.Vector3(p.x + so.x, 0.73, p.z + so.z), anchor: new THREE.Vector3(p.x, 1.5, p.z), dur: 5.0 };
+            }
+            if ((id === 'candle' || id === 'pumpkin') && placements[id] === 'sill') {
+              p = itemGroups[id].position;
+              /* on the sill: she hovers in front of the window, low,
+                 facing the piece on the sill — never behind the glass */
+              return { spot: new THREE.Vector3(p.x, 0.33, -2.2), anchor: new THREE.Vector3(p.x, 1.43, -3.32), dur: 5.0 };
+            }
+            if ((id === 'candle' || id === 'pumpkin') && placements[id] === 'nightstand') {
+              p = nightstandGroup.position;
+              var sideN = p.x <= 0 ? 1.3 : -1.3;
+              return { spot: new THREE.Vector3(p.x + sideN, 0.35, p.z + 0.3), anchor: new THREE.Vector3(itemGroups[id].position.x, 1.01, itemGroups[id].position.z), dur: 5.0 };
+            }
+            if (id === 'nightstand') {
+              p = nightstandGroup.position;
+              var sideNS = p.x <= 0 ? 1.3 : -1.3;
+              return { spot: new THREE.Vector3(p.x + sideNS, 0.35, p.z + 0.3), anchor: new THREE.Vector3(p.x, 1.01, p.z), dur: 5.0 };
             }
             if (id === 'candle') {
               p = candleGroup.position;
               /* close enough to feel the warmth, facing the flame */
-              return { spot: new THREE.Vector3(p.x - 1.15, 0.55, p.z + 0.55), anchor: new THREE.Vector3(p.x, 0.7, p.z), dur: 5.0 };
+              return { spot: new THREE.Vector3(p.x - 1.15, 0.28, p.z + 0.55), anchor: new THREE.Vector3(p.x, 0.7, p.z), dur: 5.0 };
             }
             if (id === 'stool') {
               p = stoolGroup.position;
               /* same as the chair: she hovers BESIDE it and
                  watches it float — never in front of it */
               var sideS = p.x <= 0 ? 1.3 : -1.3;
-              return { spot: new THREE.Vector3(p.x + sideS, 0.62, p.z + 0.3), anchor: new THREE.Vector3(p.x, 0.75, p.z), dur: 5.0 };
+              return { spot: new THREE.Vector3(p.x + sideS, 0.35, p.z + 0.3), anchor: new THREE.Vector3(p.x, 0.75, p.z), dur: 5.0 };
             }
             p = pumpkinGroup.position;
-            return { spot: new THREE.Vector3(p.x - 1.35, 0.55, p.z + 0.4), anchor: new THREE.Vector3(p.x, 0.6, p.z), dur: 5.0 };
+            return { spot: new THREE.Vector3(p.x - 1.35, 0.28, p.z + 0.4), anchor: new THREE.Vector3(p.x, 0.6, p.z), dur: 5.0 };
           }
           function goTo(v, after) {
             ghostState.target.copy(v);
@@ -4773,13 +5383,23 @@
             ghostState.mode = 'go';
           }
           function wander() {
+            /* in the kitchen she sometimes hovers beside the island */
+            if (currentPlace === 'kitchen' && Math.random() < 0.45) {
+              var ix = counterGroups.island ? counterGroups.island.position.x : 0;
+              var iz = counterGroups.island ? counterGroups.island.position.z : 0.95;
+              goTo(new THREE.Vector3(ix + 1.65, 0.35, iz), function () {
+                ghostState.mode = 'idle';
+                ghostState.pauseT = 1.4 + Math.random() * 3.2;
+              });
+              return;
+            }
             /* a low hover band: at the smaller size the wispy tail
                now trails just above the floor as they drift, and the
                x range stays inside the drag limits so the sheet
                never reaches past the side walls */
             var v = new THREE.Vector3(
               -3.0 + Math.random() * 6.0,
-              0.5 + Math.random() * 0.55,
+              0.23 + Math.random() * 0.55,
               -2.3 + Math.random() * 5.0
             );
             goTo(v, function () {
@@ -4880,6 +5500,10 @@
           }
           function visitItem(id) {
             if (!owned[id]) return;
+            /* Place scope: bedroom pieces are only visitable in the
+               bedroom. In the kitchen she never walks over to a
+               pumpkin, candle, chair, or any other bedroom piece. */
+            if (currentPlace === 'kitchen') return;
             var def = spotFor(id);
             goTo(def.spot, function () { startAct(id); });
           }
@@ -4926,13 +5550,46 @@
               -((cy - rect.top) / rect.height) * 2 + 1
             );
             raycaster.setFromCamera(nd, camera);
-            var hits = raycaster.intersectObjects([ghostGroup, floor, rugGroup, lightsGroup, chairGroup, shelfGroup, pumpkinGroup, candleGroup, stoolGroup, backWall, leftWall, rightWall], true);
+            /* Rug fix: the rug is a bedroom piece only, but the
+               raycaster still hits its invisible group in the
+               kitchen, and it sits coplanar with the kitchen floor
+               at y 0.015, so it used to win the middle-of-kitchen
+               tap and open the rug tray. In the kitchen the rug is
+               left out of the pick list entirely, the kitchen floor
+               is picked instead, and any rug hit that still slips
+               through is demoted to a floor hit below. */
+            /* Place scope: in the kitchen only kitchen pieces are
+               pickable; in the bedroom only bedroom pieces are.
+               Hidden out-of-room groups are left out entirely,
+               because Three r128 raycasting still hits invisible
+               groups (the old rug glitch). */
+            var pickObjs = [ghostGroup, floor, backWall, leftWall, rightWall];
+            if (currentPlace === 'kitchen') {
+              pickObjs.push(kitchenFloor);
+              if (counterGroups.counterL) pickObjs.push(counterGroups.counterL, counterGroups.counterR, counterGroups.island, fridgeGroup);
+            } else {
+              pickObjs.push(lightsGroup, chairGroup, shelfGroup, pumpkinGroup, candleGroup, stoolGroup, nightstandGroup, rugGroup);
+            }
+            var hits = raycaster.intersectObjects(pickObjs, true);
             for (var i = 0; i < hits.length; i++) {
               var o = hits[i].object;
               if (o.userData.isGhost) return { kind: 'ghost' };
-              if (o.userData.isRug) return { kind: 'rug' };
+              if (o.userData.isRug) {
+                if (currentPlace === 'kitchen') return { kind: 'floor', point: hits[i].point };
+                return { kind: 'rug' };
+              }
               var iid = o.userData.itemId;
-              if (iid && owned[iid]) return { kind: 'item', id: iid };
+              if (iid && owned[iid]) {
+                if (currentPlace === 'kitchen') return { kind: 'floor', point: hits[i].point };
+                return { kind: 'item', id: iid };
+              }
+              var cid = o.userData.counterId;
+              if (cid) {
+                if (currentPlace !== 'kitchen') return { kind: 'floor', point: hits[i].point };
+                if (o.userData.isCabinet) return { kind: 'counter', id: cid, isCabinet: true };
+                return { kind: 'counter', id: cid };
+              }
+              if (o === kitchenFloor) return { kind: 'floor', point: hits[i].point };
               if (o === floor) return { kind: 'floor', point: hits[i].point };
               if (o === backWall || o === leftWall || o === rightWall) return { kind: 'wall', point: hits[i].point };
             }
@@ -4981,7 +5638,7 @@
             raycaster.setFromCamera(nd, camera);
             return raycaster.ray.intersectPlane(floorPlane, planeHit) ? planeHit : null;
           }
-          function grabbable(hit) { return !!hit && (hit.kind === 'ghost' || hit.kind === 'item' || hit.kind === 'rug'); }
+          function grabbable(hit) { return !!hit && (hit.kind === 'ghost' || hit.kind === 'item' || hit.kind === 'rug' || hit.kind === 'counter'); }
           /* ---- shake-to-sick ----
              While she's held in a move drag, her dragged x is watched
              for direction reversals. A real shake is quick, repeated,
@@ -5031,12 +5688,23 @@
              clearance (0.01) keeps faces just off the plaster. */
           var itemFoot = {
             rug: { hx: 1.95, hz: 1.375 },
+            nightstand: { hx: 0.75, hz: 0.55 },
+            counterL: { hx: 1.70, hz: 0.40 },
+            fridge: { hx: 0.62, hz: 0.52 },
+            counterR: { hx: 1.70, hz: 0.40 },
+            island: { hx: 1.20, hz: 0.65 },
             chair: { hx: 0.82, hz: 0.66 },
             shelf: { hx: 1.0, hz: 0.27 },
             pumpkin: { hx: 0.62, hz: 0.62 },
             candle: { hx: 0.36, hz: 0.36 },
             stool: { hx: 0.5, hz: 0.5 }
           };
+          function clampCounterPos(g, id) {
+            var f = itemFoot[id];
+            if (!f) return;
+            g.position.x = Math.max(-5 + f.hx + 0.01, Math.min(5 - f.hx - 0.01, g.position.x));
+            g.position.z = Math.max(-3.5 + f.hz + 0.01, Math.min(3.5 - f.hz - 0.01, g.position.z));
+          }
           function clampItemPos(g, id) {
             var f = itemFoot[id];
             if (!f) return;
@@ -5047,15 +5715,22 @@
           }
           function beginObjDrag(cx, cy) {
             if (!grabbable(downHit) || objDrag) return;
+            /* Place scope: a piece can only be dragged in its own
+               room, even if a stale hit ever reaches here. */
+            if (downHit.kind === 'item' && currentPlace === 'kitchen') return;
+            if (downHit.kind === 'counter' && currentPlace !== 'kitchen') return;
+            if (downHit.kind === 'rug' && currentPlace === 'kitchen') return;
             objDrag = downHit;
             var o = objDrag.kind === 'ghost' ? ghostGroup.position
               : objDrag.kind === 'rug' ? rugGroup.position
+              : objDrag.kind === 'counter' ? counterGroups[objDrag.id].position
               : itemGroups[objDrag.id].position;
             var p = floorPoint(cx, cy);
             if (p) { dragOff.x = o.x - p.x; dragOff.z = o.z - p.z; }
             if (objDrag.kind === 'ghost') {
               cancelApproach();
               resetShake();
+              placeTravelling = false;
               ghostState.mode = 'idle';
               ghostState.actItem = null;
               ghostState.onArrive = null;
@@ -5067,6 +5742,9 @@
           function moveObjDrag(cx, cy) {
             var p = floorPoint(cx, cy);
             if (!p) return;
+            if (objDrag.kind === 'item' && currentPlace === 'kitchen') return;
+            if (objDrag.kind === 'counter' && currentPlace !== 'kitchen') return;
+            if (objDrag.kind === 'rug' && currentPlace === 'kitchen') return;
             if (objDrag.kind === 'ghost') {
               var gp2 = ghostGroup.position;
               /* at the old extremes their sheet would reach past
@@ -5081,6 +5759,11 @@
               rp.x = p.x + dragOff.x;
               rp.z = p.z + dragOff.z;
               clampItemPos(rugGroup, 'rug');
+            } else if (objDrag.kind === 'counter') {
+              var cp = counterGroups[objDrag.id].position;
+              cp.x = p.x + dragOff.x;
+              cp.z = p.z + dragOff.z;
+              clampCounterPos(counterGroups[objDrag.id], objDrag.id);
             } else if (objDrag.id === 'lights') {
               /* the string lights hang on the back wall — they slide along it */
               lightsGroup.position.x = Math.max(-1.4, Math.min(1.4, p.x + dragOff.x));
@@ -5127,6 +5810,26 @@
               /* dropped: they stay where they were left — and a moved
                  piece's new spot goes on the room's record */
               if (objDrag.kind === 'ghost') { ghostState.mode = 'idle'; ghostState.pauseT = 5; }
+              if (objDrag.kind === 'counter') {
+                if (cb.onItemMoved) cb.onItemMoved(objDrag.id);
+                resetShake();
+                objDrag = null; downHit = null;
+                return;
+              }
+              if (objDrag.kind === 'item' && (objDrag.id === 'pumpkin' || objDrag.id === 'candle')) {
+                /* surface snap on drop: near the nightstand -> its
+                   top; near the back wall -> the window sill; anywhere
+                   else -> back to the floor. The floor drag clamp
+                   cannot reach the sill itself, so a drop near the
+                   back wall (z < -2.5) is the sill gesture. */
+                var dp = itemGroups[objDrag.id].position;
+                var ndx = nightstandGroup.position.x, ndz = nightstandGroup.position.z;
+                var nearStand = nightstandGroup.visible && Math.abs(dp.x - ndx) < 1.4 && Math.abs(dp.z - ndz) < 1.4;
+                if (nearStand) setPlacementInternal(objDrag.id, 'nightstand');
+                else if (dp.z < -2.5 && Math.abs(dp.x) < 1.8) setPlacementInternal(objDrag.id, 'sill', dp.x);
+                else setPlacementInternal(objDrag.id, 'floor', dp.x, dp.z);
+              }
+              if (objDrag.kind === 'item' && objDrag.id === 'nightstand') refreshNightstandPlacements();
               var droppedId = objDrag.kind === 'rug' ? 'rug' : (objDrag.kind === 'item' ? objDrag.id : null);
               resetShake();
               objDrag = null; downHit = null;
@@ -5139,7 +5842,21 @@
               if (!hit) { if (cb.onEmptyTap) cb.onEmptyTap(); return; }
               if (hit.kind === 'ghost') { cb.onGhostTap(); }
               else if (hit.kind === 'item') { cb.onItemTap(hit.id); }
-              else if (hit.kind === 'rug') { if (cb.onRugTap) cb.onRugTap(); }
+              else if (hit.kind === 'rug') {
+                /* Third rug layer: a rug hit in the kitchen is a
+                   floor tap, never a rug-tray tap. The bedroom path
+                   below this branch is untouched. */
+                if (currentPlace === 'kitchen') {
+                  var fp = floorPoint(ev.clientX, ev.clientY);
+                  if (fp) {
+                    var kcx = Math.max(-3.1, Math.min(3.1, fp.x));
+                    var kcz = Math.max(-2.6, Math.min(2.9, fp.z));
+                    var usedK = cb.onFloorTap ? cb.onFloorTap(kcx, kcz) : false;
+                    if (!usedK) ripple(kcx, kcz, parseInt(ghostC1.slice(1), 16));
+                  }
+                } else if (cb.onRugTap) cb.onRugTap();
+              }
+              else if (hit.kind === 'counter') { if (hit.isCabinet) { if (cb.onCabinetTap) cb.onCabinetTap(); } else if (cb.onCounterTap) cb.onCounterTap(hit.id); }
               else if (hit.kind === 'wall') {
                 /* a wall tap sends them to the floor just in front of
                    the tapped spot: along the wall for the back wall,
@@ -5170,7 +5887,7 @@
             dragging = false; lastUpT = elapsed;
             clearTimeout(holdTimer);
             if (objDrag && objDrag.kind === 'ghost') { ghostState.pauseT = 1.5; }
-            var cancelledId = objDrag && objDrag.kind === 'rug' ? 'rug' : (objDrag && objDrag.kind === 'item' ? objDrag.id : null);
+            var cancelledId = objDrag && objDrag.kind === 'rug' ? 'rug' : (objDrag && objDrag.kind === 'counter' ? objDrag.id : (objDrag && objDrag.kind === 'item' ? objDrag.id : null));
             resetShake();
             objDrag = null; downHit = null;
             if (cancelledId && cb.onItemMoved) cb.onItemMoved(cancelledId);
@@ -5306,8 +6023,13 @@
               g.targetRotY = 0;
               g.pauseT -= dt;
               idleItemT -= dt;
+              /* No autonomous room trips any more: she wanders
+                 within the current room only. Rooms change ONLY by
+                 tapping the place arrow (travelToPlace). The arrival
+                 line in onPlaceChange therefore only ever fires on a
+                 manual arrow tap, never on its own. */
               if (g.pauseT <= 0) {
-                var ids = Object.keys(owned).filter(function (id) { return owned[id]; });
+                var ids = currentPlace === 'kitchen' ? [] : Object.keys(owned).filter(function (id) { return owned[id]; });
                 if (ids.length && idleItemT <= 0 && Math.random() < 0.55) {
                   idleItemT = 11 + Math.random() * 8;
                   visitItem(ids[Math.floor(Math.random() * ids.length)]);
@@ -5401,6 +6123,11 @@
               camTarget.z + radius * Math.sin(phi) * Math.cos(theta)
             );
             camera.lookAt(camTarget);
+            /* window parallax, still 2D: the flat sky shifts a
+               little with the camera angle, the flat pine foreground
+               shifts a little more, so the layers separate */
+            if (typeof sky !== 'undefined' && sky) sky.position.x = -theta * 0.12;
+            if (typeof pineLayer !== 'undefined' && pineLayer) pineLayer.position.x = -theta * 0.22;
 
             renderer.render(scene, camera);
           }
@@ -5475,6 +6202,13 @@
             },
             isClose: function () { return approachActive; },
             visit: function (id) { visitItem(id); },
+            setPlace: function (place) { travelToPlace(place); },
+            getPlace: function () { return currentPlace; },
+            setKitchenWhite: function (hex) { setKitchenWhiteInternal(hex); },
+            setKitchenFloor: function (hex) { setKitchenFloorInternal(hex); },
+            setWallForRoom: function (place, hex) { setWallForRoomInternal(place, hex); },
+            setFridgeColor: function (hex) { setFridgeColorInternal(hex); },
+            setCountertopColor: function (hex) { setCountertopColorInternal(hex); },
             /* tap-to-move: glide to a floor spot the owner tapped, at
                their current float height, then settle there a while
                before wandering off again */
@@ -5555,28 +6289,18 @@
               floorMat.roughnessMap = maps.bump;
               floorMat.needsUpdate = true;
             },
-            setWallPaint: function (hex) {
-              /* the pick, converted to linear so the renderer's sRGB
-                 output lands it back on the swatch color. Night keeps
-                 the paint's own hue — dimmed and cooled toward
-                 moonlight instead of swapped for a fixed blue — and
-                 the ceiling stays a paler cut of the same paint. */
-              var base = srgbLin(hex);
-              var moon = srgbLin(0x8fa3cc);
-              function paint(mat, dayC) {
-                var e = mat.userData.ci;
-                if (!e) return;
-                e.d.copy(dayC);
-                e.n.copy(dayC).lerp(moon, 0.35).multiplyScalar(0.42);
-              }
-              paint(wallMat, base);
-              paint(sideMat, base.clone().multiplyScalar(0.9));
-              paint(ceilMat, base.clone().lerp(new THREE.Color(1, 1, 1), 0.3));
-            },
+            setWallPaint: function (hex) { applyWallPaintInternal(hex); },
             setItem: function (id, on) {
               owned[id] = on;
               var grp = itemGroups[id];
               if (!grp) return;
+              /* turning the nightstand off drops anything sitting
+                 on it back to the floor, so nothing floats */
+              if (id === 'nightstand' && !on) {
+                ['pumpkin', 'candle'].forEach(function (pid) {
+                  if (placements[pid] === 'nightstand') setPlacementInternal(pid, 'floor', itemGroups[pid].position.x, itemGroups[pid].position.z);
+                });
+              }
               if (on) {
                 grp.visible = true;
                 tween(0.5, function (k) { grp.scale.setScalar(Math.max(0.001, easeOutBack(k))); }, null, function (k) { return k; });
@@ -5595,18 +6319,21 @@
                rotated footprint so a record can never park a corner
                through a wall. */
             getItemTransform: function (id) {
-              var g = id === 'rug' ? rugGroup : itemGroups[id];
+              var g = id === 'rug' ? rugGroup : (counterGroups[id] || itemGroups[id]);
               if (!g) return null;
               return { x: g.position.x, z: g.position.z, rot: g.rotation.y };
             },
             setItemTransform: function (id, t) {
-              var g = id === 'rug' ? rugGroup : itemGroups[id];
+              var g = id === 'rug' ? rugGroup : (counterGroups[id] || itemGroups[id]);
               if (!g || !t) return;
               if (typeof t.x === 'number' && isFinite(t.x)) g.position.x = t.x;
               if (typeof t.z === 'number' && isFinite(t.z)) g.position.z = t.z;
               if (typeof t.rot === 'number' && isFinite(t.rot)) g.rotation.y = t.rot;
-              clampItemPos(g, id);
-            }
+              if (counterGroups[id]) clampCounterPos(g, id); else clampItemPos(g, id);
+              if (id === 'nightstand') refreshNightstandPlacements();
+            },
+            getPlacements: function () { return { pumpkin: placements.pumpkin, candle: placements.candle }; },
+            setPlacement: function (id, place) { setPlacementInternal(id, place); }
           };
         }
       })();
