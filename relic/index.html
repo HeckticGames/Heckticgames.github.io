@@ -92,7 +92,7 @@
            making wall-section a column fixes that at the source. */
         width: 100%;
         max-width: 1180px;
-        flex: 1 0 100%;
+        flex: none;
         margin: 0 auto;
       }
       .wall-lede {
@@ -138,7 +138,12 @@
         border-radius: 20px;
         padding: clamp(8px, 1.6vw, 13px) clamp(8px, 1.6vw, 13px) 4px;
       }
-      .brandbar { display: flex; align-items: center; gap: 6px; padding: 3px 2px 1px; }
+      .brandbar { display: flex; align-items: center; gap: 6px; padding: 8px 14px 12px; margin-top: -30px; position: relative; z-index: 2; background: linear-gradient(160deg, #fdfdfb, #e8e8e2); border-radius: 0 0 30px 30px; }
+      /* 2026-10-27: brandbar sits in the DOM after the panel, so
+         without this it renders below the white panel on the wall
+         background. Overlapping it 30px into the panel bottom and
+         giving it the same white panel background makes RELIC and
+         the volume button read as on the hub itself, with no gap. */
       .brandbar .spacer { width: 32px; flex: none; }
       .brandline {
         flex: 1;
