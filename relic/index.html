@@ -123,26 +123,27 @@
       @media (max-width: 560px) { .frame-art { display: none; } }
 
       .panel-unit { position: relative; z-index: 2; padding: 8px; width: 100%; background: #06090c; border: 3px solid #17bfa5; border-radius: 38px; box-shadow: 0 0 0 10px #ffffff; }
+      /* 2026-10-28, frame fix: only three lines, not five.
+         Outer white (panel-unit box-shadow), teal (panel-unit
+         border), black (panel-unit background). The old inner
+         white panel and inner black bezel are gone: both are
+         transparent now, so the black panel-unit background is
+         the single black line and the screen sits straight in it. */
       .panel {
         position: relative;
         z-index: 1;
         width: 100%;
-        background:
-          url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.04 0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E"),
-          linear-gradient(160deg, #fdfdfb, #e8e8e2);
+        background: transparent;
         border-radius: 30px;
         padding: clamp(10px, 2vw, 16px);
-        box-shadow:
-          0 24px 44px rgba(30, 25, 15, 0.30),
-          0 4px 10px rgba(30, 25, 15, 0.18),
-          inset 0 1px 0 #ffffff;
+        box-shadow: none;
       }
       .bezel {
-        background: #06090c;
+        background: transparent;
         border-radius: 20px;
         padding: clamp(8px, 1.6vw, 13px) clamp(8px, 1.6vw, 13px) 4px;
       }
-      .brandbar { display: flex; align-items: center; gap: 6px; padding: 2px 14px 4px; margin-top: -16px; position: relative; z-index: 2; background: #06090c; border-radius: 0 0 30px 30px; }
+      .brandbar { display: flex; align-items: center; gap: 6px; padding: 2px 14px 4px; margin-top: 0; position: relative; z-index: 2; background: #06090c; border-radius: 0 0 30px 30px; }
       /* 2026-10-27: brandbar sits in the DOM after the panel, so
          without this it renders below the white panel on the wall
          background. Overlapping it 16px into the panel bottom and
