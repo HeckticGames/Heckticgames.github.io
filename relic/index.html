@@ -122,7 +122,7 @@
       .frame-art svg { display: block; width: 100%; height: auto; }
       @media (max-width: 560px) { .frame-art { display: none; } }
 
-      .panel-unit { position: relative; z-index: 2; padding-top: 2px; width: 100%; }
+      .panel-unit { position: relative; z-index: 2; padding: 8px; width: 100%; background: #06090c; border: 3px solid #17bfa5; border-radius: 38px; box-shadow: 0 0 0 10px #ffffff; }
       .panel {
         position: relative;
         z-index: 1;
@@ -192,6 +192,14 @@
       }
       body.room-night .underglow { opacity: 1; filter: blur(7px) brightness(1.3); }
 
+
+
+      /* 2026-10-28, free-to-play offline game: no Stripe, no Plus,
+         no account, no checkout UI. Tokens are the only currency. */
+      .plus-btn, .plus-pop, .acct-row, .acct-pop, .checkout-pop, #cart-row { display: none !important; }
+      /* 2026-10-28, token game: small hexagon coin counter, top left.
+         1 token every 10 seconds on the page, every item costs 5 tokens. */
+      .token-counter { position: fixed; top: 10px; left: 10px; z-index: 999; width: 74px; height: 40px; display: flex; align-items: center; justify-content: center; gap: 3px; background: #17bfa5; color: #06090c; font-family: "Baloo 2", sans-serif; font-weight: 800; font-size: 15px; clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%); }
       /* ---------- Screen / 3D room ---------- */
       .screen {
         position: relative;
@@ -844,6 +852,7 @@
     </style>
   </head>
   <body>
+    <div class="token-counter" id="token-counter" aria-label="Tokens"><span aria-hidden="true">⬡</span><span id="token-count">0</span></div>
     <!-- ============ THE WALL ============ -->
     <div class="wall-section">
       <div class="hub-col">
@@ -1058,12 +1067,12 @@
 
         <div class="shop-under">
           <div class="shop-btnrow">
-            <button class="shop-btn" id="btn-shop" aria-label="Shop for their room" aria-haspopup="true" aria-expanded="false" title="Shop for their room">
+            <button class="shop-btn" id="btn-shop" aria-label="Item for their room" aria-haspopup="true" aria-expanded="false" title="Shop for their room">
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <path d="M5.5 8h13l-1.1 11a2 2 0 0 1-2 1.8H8.6a2 2 0 0 1-2-1.8L5.5 8Z"/>
                 <path d="M8.5 10.5V6.8a3.5 3.5 0 0 1 7 0v3.7"/>
               </svg>
-              Shop
+              Item
             </button>
             <button class="plus-btn" id="btn-plus" aria-label="Relic Plus — Relic's smart brain" aria-haspopup="true" aria-expanded="false" aria-pressed="false" title="Relic Plus — Relic's smart brain">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -1075,7 +1084,7 @@
           <div class="acct-row">
             <button class="acct-btn" id="btn-acct" aria-haspopup="true" aria-expanded="false" title="Your Relic account">Log in</button>
           </div>
-          <div class="shop-pop" id="shop-pop" role="group" aria-label="Shop for their room" hidden>
+          <div class="shop-pop" id="shop-pop" role="group" aria-label="Item for their room" hidden>
             <div class="shop-head">For their room</div>
             <div class="shop-grid">
               <button class="shop-item" id="item-lights" aria-pressed="false">
@@ -1106,7 +1115,7 @@
                     <circle cx="46" cy="42" r="4" fill="#ffd9a3"/>
                   </svg>
                 </span>
-                <span class="shop-info"><span class="shop-name">String lights</span><span class="shop-price">$0.99 <span class="per">· one-time</span></span></span>
+                <span class="shop-info"><span class="shop-name">String lights</span><span class="shop-price">5 tokens</span></span>
                 <span class="shop-state">Add</span>
               </button>
               <button class="shop-item" id="item-chair" aria-pressed="false">
@@ -1123,7 +1132,7 @@
                     <rect x="39" y="46" width="4" height="7" rx="2" fill="#7a4a2d"/>
                   </svg>
                 </span>
-                <span class="shop-info"><span class="shop-name">Reading chair</span><span class="shop-price">$0.99 <span class="per">· one-time</span></span></span>
+                <span class="shop-info"><span class="shop-name">Reading chair</span><span class="shop-price">5 tokens</span></span>
                 <span class="shop-state">Add</span>
               </button>
               <button class="shop-item" id="item-shelf" aria-pressed="false">
@@ -1154,7 +1163,7 @@
                     </g>
                   </svg>
                 </span>
-                <span class="shop-info"><span class="shop-name">Bookshelf</span><span class="shop-price">$0.99 <span class="per">· one-time</span></span></span>
+                <span class="shop-info"><span class="shop-name">Bookshelf</span><span class="shop-price">5 tokens</span></span>
                 <span class="shop-state">Add</span>
               </button>
               <button class="shop-item" id="item-pumpkin" aria-pressed="false">
@@ -1169,7 +1178,7 @@
                     <path d="M22 44 l3.4 3 3 -2.4 3 3 3 -2.4 3 3 3.4 -3 -1.6 5.4 q-7.2 3 -15.4 0Z" fill="#ffd94d"/>
                   </svg>
                 </span>
-                <span class="shop-info"><span class="shop-name">Jack-o'-lantern</span><span class="shop-price">Free <span class="per">· fall pack</span></span></span>
+                <span class="shop-info"><span class="shop-name">Jack-o'-lantern</span><span class="shop-price">5 tokens</span></span>
                 <span class="shop-state">Add</span>
               </button>
               <button class="shop-item" id="item-candle" aria-pressed="false">
@@ -1183,7 +1192,7 @@
                     <ellipse cx="32" cy="54" rx="13" ry="3" fill="#3a3f4a"/>
                   </svg>
                 </span>
-                <span class="shop-info"><span class="shop-name">Candle</span><span class="shop-price">Free <span class="per">· one-time</span></span></span>
+                <span class="shop-info"><span class="shop-name">Candle</span><span class="shop-price">5 tokens</span></span>
                 <span class="shop-state">Add</span>
               </button>
               <button class="shop-item" id="item-stool" aria-pressed="false">
@@ -1195,7 +1204,7 @@
                     <path d="M18 26 l-3 24 M46 26 l3 24 M24 38 h16" stroke="#a8845e" stroke-width="4" stroke-linecap="round" fill="none"/>
                   </svg>
                 </span>
-                <span class="shop-info"><span class="shop-name">Stool</span><span class="shop-price">Free <span class="per">· one-time</span></span></span>
+                <span class="shop-info"><span class="shop-name">Stool</span><span class="shop-price">5 tokens</span></span>
                 <span class="shop-state">Add</span>
               </button>
               <button class="shop-item" id="item-nightstand" aria-pressed="false">
@@ -1209,7 +1218,7 @@
                     <rect x="42" y="44" width="4" height="10" rx="2" fill="#7a4a2d"/>
                   </svg>
                 </span>
-                <span class="shop-info"><span class="shop-name">Nightstand</span><span class="shop-price">Free <span class="per">· one-time</span></span></span>
+                <span class="shop-info"><span class="shop-name">Nightstand</span><span class="shop-price">5 tokens</span></span>
                 <span class="shop-state">Add</span>
               </button>
             </div>
@@ -2135,13 +2144,13 @@
            toggling an item out of the room, or turning Plus off,
            never un-owns anything. */
         var ITEM_DEFS = {
-          lights: { name: 'String lights', btn: 'item-lights', price: 0.99 },
-          chair: { name: 'Reading chair', btn: 'item-chair', price: 0.99 },
-          shelf: { name: 'Bookshelf', btn: 'item-shelf', price: 0.99 },
-          pumpkin: { name: "Jack-o'-lantern", btn: 'item-pumpkin', price: 0 },
-          candle: { name: 'Candle', btn: 'item-candle', price: 0 },
-          stool: { name: 'Stool', btn: 'item-stool', price: 0 },
-          nightstand: { name: 'Nightstand', btn: 'item-nightstand', price: 0 }
+          lights: { name: 'String lights', btn: 'item-lights', price: 5 },
+          chair: { name: 'Reading chair', btn: 'item-chair', price: 5 },
+          shelf: { name: 'Bookshelf', btn: 'item-shelf', price: 5 },
+          pumpkin: { name: "Jack-o'-lantern", btn: 'item-pumpkin', price: 5 },
+          candle: { name: 'Candle', btn: 'item-candle', price: 5 },
+          stool: { name: 'Stool', btn: 'item-stool', price: 5 },
+          nightstand: { name: 'Nightstand', btn: 'item-nightstand', price: 5 }
         };
         /* per-item prices: the pumpkin, the candle, the stool, and
            the nightstand are FREE (Evan's call — free for newcomers), the rest
@@ -2151,6 +2160,21 @@
         function cartTotalValue() {
           return cartIds().reduce(function (sum, id) { return sum + itemPrice(id); }, 0);
         }
+
+        /* 2026-10-28, token game: every item costs 5 tokens.
+           Earn 1 token every 10 seconds on the page. Balance lives
+           in localStorage on this device, so it survives a reload. */
+        var TOKEN_COST = 5;
+        var TOKEN_KEY = 'relic-tokens-v1';
+        var tokens = 0;
+        try { tokens = parseInt(localStorage.getItem(TOKEN_KEY), 10) || 0; } catch (e) { tokens = 0; }
+        function updateTokenUI() {
+          var el = document.getElementById('token-count');
+          if (el) el.textContent = String(tokens);
+        }
+        function saveTokens() { try { localStorage.setItem(TOKEN_KEY, String(tokens)); } catch (e) {} }
+        setInterval(function () { tokens += 1; saveTokens(); updateTokenUI(); }, 10000);
+        updateTokenUI();
         var PLUS_PRICE = 10;
         var ownedItems = {};   /* bought — forever */
         var placedItems = {};  /* owned and currently in the room */
@@ -2407,10 +2431,12 @@
                 sndRemove();
                 say(offLine, 3000);
               }
-            } else if (itemPrice(itemId) === 0) {
-              /* free pieces skip the cart and the checkout sheet
-                 entirely: one tap claims them, forever, and she
-                 goes to see the new piece like any other arrival */
+            } else if (tokens >= TOKEN_COST) {
+              /* token game: one tap spends 5 tokens, claims the
+                 piece forever, and places it. No cart, no Stripe. */
+              tokens -= TOKEN_COST;
+              saveTokens();
+              updateTokenUI();
               delete cartItems[itemId];
               ownedItems[itemId] = true;
               placedItems[itemId] = true;
@@ -2422,18 +2448,10 @@
               express('surprised', 1);
               say(onLine, 3400);
               setTimeout(function () { if (room3d) room3d.visit(itemId); }, 420);
-            } else if (cartItems[itemId]) {
-              delete cartItems[itemId];
-              sndRemove();
-              renderShopItem(itemId);
-              renderCartRow();
-              saveState();
             } else {
-              cartItems[itemId] = true;
+              /* not enough tokens yet: 1 token every 10 seconds */
               sndBoop();
-              renderShopItem(itemId);
-              renderCartRow();
-              saveState();
+              say('That one costs 5 tokens. You have ' + tokens + ', so ' + (TOKEN_COST - tokens) + ' more to go. Hang around a bit and they tick up.', 4200);
             }
           });
         }
@@ -3241,9 +3259,10 @@
         /* Logged in, the words go to Relic's real brain on the
            server (see the account section below); logged out, the
            demo engine below answers, exactly as it always has. */
+        /* 2026-10-28, offline game: no server, no AI brain.
+           Room scripts first, then the scripted demo replies. */
         function deliverMessage(text) {
           if (deliverRoomScript(text)) return;
-          if (authToken) { deliverServerMessage(text); return; }
           deliverDemoMessage(text);
         }
         function deliverDemoMessage(text) {
@@ -3563,15 +3582,8 @@
            or shopping settles into one send ~800ms after the last
            change */
         var serverSaveTimer = null;
-        function scheduleServerSave() {
-          if (!authToken) return;
-          clearTimeout(serverSaveTimer);
-          serverSaveTimer = setTimeout(function () {
-            serverSaveTimer = null;
-            if (!authToken) return;
-            apiFetch('/save', { method: 'PUT', body: JSON.stringify({ data: stateSnapshot() }) }).then(function () {}, function () {});
-          }, 800);
-        }
+        /* 2026-10-28, offline game: saves are local only. */
+        function scheduleServerSave() { return; }
         /* The room LOOK with the money left out of it: colors,
            the rug's spot, the finishes — the parts that are safe
            for a device room to hand to a first account. Owned
@@ -3934,7 +3946,7 @@
           }, 1500);
         })();
         updateAuthUI();
-        if (authToken) { syncFromServer(); refreshBillingStatus(); }
+        /* 2026-10-28, offline game: no server sync, no billing status. */
 
         /* ================================================================
            The 3D room — Three.js. Blank room, one ghost, buyable things.
